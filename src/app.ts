@@ -2,16 +2,42 @@ import * as Discord from 'discord.js';
 import initCommands, { Commands } from './domain/commands';
 import config from './infrastructure/config';
 import minimist from 'minimist-string';
+import fb from './infrastructure/firebase';
+import { pokedex } from './temp';
+import PokedexService from './domain/services/pokedex';
+import UserService from './domain/services/users';
+import WildService from './domain/services/wild';
 
 const client = new Discord.Client();
 
 client.on('message', async (message) => {
+    if (message.author.bot) {
+        return;
+    }
+
     if (!message.content.startsWith(config.discord.prefix)) {
+        UserService.xpActivePokemon(message.author.id);
+        
+        // for developpement, #code channel
+        if (message.channel.id === "836696380193505291") {
+            const pokemon = await WildService.tryToSpawnWildPokemon(message.author.id);
+            if (pokemon) {
+                const embed = new Discord.MessageEmbed()
+                    .setTitle("A wild pokémon has appeared!")
+                    .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
+                    .setColor("#ff0000")
+                    .setDescription("Guess the pokémon and type p!catch <pokémon> to catch it!")
+                    .setImage(pokemon.img);
+                
+                message.reply({ embed: embed });
+            }
+        }
+
         return;
     }
 
     const tempArgs = message.content.split(/\s+/);
-    const command = tempArgs.shift().toLowerCase().slice(config.discord.prefix.length + 1);
+    const command = tempArgs.shift().toLowerCase().slice(config.discord.prefix.length);
     
     const { _: args, ...kwargs } = minimist(tempArgs.join(' '));
 
@@ -49,3 +75,23 @@ const load = async () => {
 };
 
 load();
+
+const initPokedex = () => {
+    pokedex.forEach((pokemon) => {
+        fb.pokemonsCollections.doc(pokemon.id.toString())
+            .set({
+                ...pokemon,
+                name: pokemon.name.toLowerCase(),
+                prev_evolution: (pokemon.prev_evolution || []).map((p) => ({
+                    num: p.num,
+                    name: p.name.toLowerCase()
+                })),
+                next_evolution: (pokemon.next_evolution || []).map((p) => ({
+                    num: p.num,
+                    name: p.name.toLowerCase()
+                }))
+            });
+    });
+}
+
+// initPokedex();
