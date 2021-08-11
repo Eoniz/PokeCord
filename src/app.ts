@@ -16,14 +16,24 @@ client.on('message', async (message) => {
     }
 
     if (!message.content.startsWith(config.discord.prefix)) {
-        UserService.xpActivePokemon(message.author.id);
+        const [leveledUp, leveledUpPokemon] = await UserService.xpActivePokemon(message.author.id);
+        if (leveledUp) {
+            const embed = new Discord.MessageEmbed()
+                .setTitle(`Your pokemon leveled up!`)
+                .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
+                .setColor("#ff0000")
+                .setDescription(`Your pokémon is now level ${leveledUpPokemon.level}`)
+                .setImage(leveledUpPokemon.img);
+            
+            message.channel.send({ embed: embed });
+        }
         
         // for developpement, #code channel
         if (message.channel.id === "836696380193505291") {
             const pokemon = await WildService.tryToSpawnWildPokemon(message.author.id);
             if (pokemon) {
                 const embed = new Discord.MessageEmbed()
-                    .setTitle("A wild pokémon has appeared!")
+                    .setTitle(`A wild pokémon has appeared! (tip: ${pokemon.name})`)
                     .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
                     .setColor("#ff0000")
                     .setDescription("Guess the pokémon and type p!catch <pokémon> to catch it!")

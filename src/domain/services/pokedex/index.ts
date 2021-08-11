@@ -22,6 +22,7 @@ export type Pokemon = {
     multipliers: number[];
     weaknesses: string[];
     next_evolution: Evolution[];
+    prev_evolution: Evolution[];
 }
 
 export type CaughtPokemonMeta = {
@@ -53,12 +54,18 @@ class PokedexService {
         return pokemons.docs[0].data() as Pokemon;
     }
 
-    static async getRandomPokemon(): Promise<Pokemon> {
+    static async getRandomPokemon(allowEvolvedPokemons: boolean = true): Promise<Pokemon> {
         const pokemonsDocs = await fb.pokemonsCollections.get();
         const pokemons: Array<Pokemon> = [];
 
+        
         for (const pokemon of pokemonsDocs.docs) {
-            pokemons.push(pokemon.data() as Pokemon);
+            const p: Pokemon = pokemon.data() as Pokemon;
+            if (!allowEvolvedPokemons && p.prev_evolution.length > 0) {
+                continue;
+            }
+
+            pokemons.push(p);
         }
 
         const idx = Math.max(0, Math.floor(Math.random() * (pokemons.length - 1)));

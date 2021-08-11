@@ -8,8 +8,10 @@ export type AbstractUser = {
     inventory: Array<any>;
 }
 
+export type PokemonInPokedex = CaughtPokemonMeta & { id: number; pokemon_id: number; };
+
 export type UserDB = AbstractUser & {
-    pokemons: Array<CaughtPokemonMeta & { id: number; pokemon_id: number; }>;
+    pokemons: Array<PokemonInPokedex>;
     active_pokemon: number;
 }
 
@@ -19,6 +21,22 @@ export type User = AbstractUser & {
 }
 
 class UserService {
+    private static async _fromPokemonInPokedexToCaughtPokemon (meta: PokemonInPokedex): Promise<CaughtPokemon | null> {
+        const pokemon = await PokedexService.getById(meta.pokemon_id);
+        if (pokemon !== null) {
+            const pokemonData: CaughtPokemon = {
+                ...pokemon,
+                level: meta.level,
+                next_level_xp_needed: meta.next_level_xp_needed,
+                current_xp: meta.current_xp
+            };
+
+            return pokemonData;
+        }
+
+        return null;
+    }
+
     private static async _fromDbToDTO (user: UserDB): Promise<User> {
         const pokemons: Array<CaughtPokemon> = [];
         let activePokemon: CaughtPokemon | null = null;
@@ -91,25 +109,64 @@ class UserService {
         return [true, data];
     }
 
-    static async xpActivePokemon(id: string): Promise<UserDB> {
+    static async xpActivePokemon(id: string): Promise<[boolean, CaughtPokemon | null]> {
         const userDB = await fb.usersCollections.doc(id).get();
         
         if (!userDB.exists) {
-            return;
+            return [false, null];
         }
 
         const data = userDB.data() as UserDB;
 
         const timeBetweenXpInMs = config.game.timeBetweenXp * 1000;
         if (Date.now() < (data.last_msg_timestamp + timeBetweenXpInMs)) {
-            return;
+            return [false, null];
         }
 
         const nextData = {...data};
         nextData.pokemons[data.active_pokemon].current_xp += 1;
         nextData.last_msg_timestamp = Date.now();
 
+        let leveledUp = false;
+        if (nextData.pokemons[data.active_pokemon].current_xp >= nextData.pokemons[data.active_pokemon].next_level_xp_needed) {
+            nextData.pokemons[data.active_pokemon].level = nextData.pokemons[data.active_pokemon].level + 1;
+            nextData.pokemons[data.active_pokemon].current_xp = nextData.pokemons[data.active_pokemon].current_xp % nextData.pokemons[data.active_pokemon].next_level_xp_needed;
+            nextData.pokemons[data.active_pokemon].next_level_xp_needed = 100 + (25 * nextData.pokemons[data.active_pokemon].level - 1);
+            leveledUp = true;
+        }
+
         await fb.usersCollections.doc(id).update(nextData);
+
+        if (leveledUp) {
+            const caughtPokemon = await UserService._fromPokemonInPokedexToCaughtPokemon(nextData.pokemons[data.active_pokemon]);
+            return [leveledUp, caughtPokemon];
+        }
+
+        return [false, null];
+    }
+
+    static async addPokemonToPokedex(userId: string, pokemon: Pokemon): Promise<CaughtPokemon> {
+        const userDB = await fb.usersCollections.doc(userId).get();
+        
+        if (!userDB.exists) {
+            return;
+        }
+
+        const user = userDB.data() as UserDB;
+        const nextPokemons: Array<PokemonInPokedex> = [
+            ...user.pokemons,
+            {
+                pokemon_id: pokemon.id,
+                id: user.pokemons.length,
+                level: 1,
+                next_level_xp_needed: 100,
+                current_xp: 0
+            }
+        ];
+
+        await fb.usersCollections.doc(userId).update({
+            pokemons: nextPokemons
+        });
     }
 }
 

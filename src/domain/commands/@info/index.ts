@@ -18,7 +18,7 @@ const info: ICommand = {
             .setTitle(`Level ${user.active_pokemon.level} ${capitalize(user.active_pokemon.name)}`)
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
             .setColor("#ff0000")
-            .setDescription(`${user.active_pokemon.current_xp}/${user.active_pokemon.next_level_xp_needed}XP\n`)
+            .setDescription(`${user.active_pokemon.current_xp}/${user.active_pokemon.next_level_xp_needed}XP\n\n**Type(s):** ${user.active_pokemon.type.join(' / ')}\n**Weaknesses:** ${user.active_pokemon.weaknesses.join(' / ')}\n**Weight:** ${user.active_pokemon.weight}\n**Height:** ${user.active_pokemon.height}\n`)
             .setImage(user.active_pokemon.img);
         
         message.channel.send({ embed: embed });
