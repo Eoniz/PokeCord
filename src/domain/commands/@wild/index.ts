@@ -30,7 +30,7 @@ const catchCommand: ICommand = {
             .setTitle(`Your active wild fight`)
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
-            .setDescription("Guess the pokémon and type p!catch <pokémon> to catch it!")
+            .setDescription(`Guess the pokémon and type p!catch <pokémon> to catch it!\n\n**Type(s):** ${pokemon.type.join(' / ')}\n**Weaknesses:** ${pokemon.weaknesses.join(' / ')}\n**Weight:** ${pokemon.weight}\n**Height:** ${pokemon.height}\n`)
             .setImage(pokemon.img)
             .setFooter(`Time left: ${timeLeftStr(endTime)}`)
     
