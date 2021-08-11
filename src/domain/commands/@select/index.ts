@@ -31,7 +31,7 @@ const select: ICommand = {
             
             const embed = new Discord.MessageEmbed()
                 .setTitle("Your new friend!")
-                .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
+                .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
                 .setDescription(`${capitalize(pokemon.name)} is now your active pokemon`)
                 .setImage(pokemon.img);

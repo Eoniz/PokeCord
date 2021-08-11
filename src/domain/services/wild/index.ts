@@ -61,6 +61,38 @@ class WildService {
         return wild.exists;
     }
 
+    static async getWildInformations(userId: string): Promise<{
+        meta: Wild;
+        pokemon: Pokemon;
+    }> {
+        const activeWild = await fb.wildCollections.doc(userId).get();
+
+        if (activeWild.exists) {
+            const data = activeWild.data() as Wild;
+
+            if (Date.now() >= (data.timestamp + (config.game.resetWildFightAfter * 1000))) {
+                await fb.wildCollections.doc(userId).delete();
+                return {
+                    meta: null,
+                    pokemon: null
+                }
+            }
+
+            const activeWildData = activeWild.data() as Wild;
+            const pokemon = await PokedexService.getById(activeWildData.pokemon_id);
+
+            return {
+                meta: activeWildData,
+                pokemon: pokemon
+            };
+        }
+        
+        return {
+            meta: null,
+            pokemon: null
+        }
+    }
+
     static async attemptToCatch (userId: string, pokemonName: string): Promise<AttemptToCatchResults> {
         const wild = await fb.wildCollections.doc(userId).get();
 

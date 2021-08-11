@@ -1,4 +1,3 @@
-import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import PokedexService from '../../services/pokedex';
 import UserService from '../../services/users';

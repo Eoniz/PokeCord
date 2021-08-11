@@ -7,7 +7,7 @@ const pokemon: ICommand = {
     name: "pokemon",
     description: "Informations about your pokemons.",
     execute: async (message, args) => {
-        const MAX_PER_PAGE = 5;
+        const MAX_PER_PAGE = 25;
         let page = 1;
         
         const user = await UserService.getUserById(message.author.id);
@@ -35,12 +35,12 @@ const pokemon: ICommand = {
         const desc: string[] = [];
         const sorted = user.pokemons.slice(paginationStart, paginationEnd).sort((a, b) => a.id - b.id);
         for (const pokemon of sorted) {
-            desc.push(`**${capitalize(pokemon.name)}** | Level ${pokemon.level} | Number: ${pokemon.id}`);
+            desc.push(`${pokemon.id}: **${capitalize(pokemon.name)}** | Level ${pokemon.level}`);
         }
         
         const embed = new Discord.MessageEmbed()
             .setTitle("Your Pokémons:")
-            .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
+            .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
             .setDescription(desc.join('\n'))
             .setImage(user.active_pokemon.img)

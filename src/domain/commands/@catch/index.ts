@@ -1,7 +1,6 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
-import PokedexService from '../../services/pokedex';
 import UserService from '../../services/users';
 import WildService from '../../services/wild';
 
@@ -31,7 +30,7 @@ const catchCommand: ICommand = {
         if (caught) {
             const embed = new Discord.MessageEmbed()
                 .setTitle("Congratulations!")
-                .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg","https://yagami.xyz")
+                .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
                 .setDescription(`You caught a ${capitalize(pokemon.name)}!\n\n**Added to your Pokédex**`)
                 .setImage(pokemon.img);
