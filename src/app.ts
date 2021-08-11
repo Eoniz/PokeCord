@@ -121,9 +121,10 @@ app.listen(PORT, () => {
 });
 
 app.get('/', (req, res) => {
-    res.send('Pong !')
+    console.log("Ping !");
+    res.send('Pong !');
 });
 
 setInterval(function() {
-    http.get("https://floating-hamlet-05414.herokuapp.com/")
+    http.get("http://floating-hamlet-05414.herokuapp.com/")
 }, 150000);
