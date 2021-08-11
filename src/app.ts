@@ -1,3 +1,4 @@
+import express from "express";
 import * as Discord from 'discord.js';
 import initCommands, { Commands } from './domain/commands';
 import config from './infrastructure/config';
@@ -111,3 +112,10 @@ const initPokedex = () => {
 }
 
 // initPokedex();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log("App is up and running on port", PORT);
+});
+
