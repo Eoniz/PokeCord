@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import * as Discord from 'discord.js';
 import initCommands, { Commands } from './domain/commands';
 import config from './infrastructure/config';
@@ -119,3 +120,10 @@ app.listen(PORT, () => {
     console.log("App is up and running on port", PORT);
 });
 
+app.get('/', (req, res) => {
+    res.send('Pong !')
+});
+
+setInterval(function() {
+    http.get("https://floating-hamlet-05414.herokuapp.com/")
+}, 150000);
