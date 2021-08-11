@@ -48,7 +48,8 @@ class UserService {
                     ...pokemon,
                     level: pokemonMeta.level,
                     next_level_xp_needed: pokemonMeta.next_level_xp_needed,
-                    current_xp: pokemonMeta.current_xp
+                    current_xp: pokemonMeta.current_xp,
+                    id: pokemonMeta.id
                 };
 
                 pokemons.push(pokemonData);
@@ -167,6 +168,20 @@ class UserService {
         await fb.usersCollections.doc(userId).update({
             pokemons: nextPokemons
         });
+    }
+
+    static async changeActivePokemonIdTo(userId: string, nextPokemonId: number): Promise<boolean> {
+        const user = await fb.usersCollections.doc(userId).get();
+
+        if (!user.exists) {
+            return false;
+        }
+
+        await fb.usersCollections.doc(userId).update({
+            active_pokemon: nextPokemonId
+        });
+
+        return true;
     }
 }
 

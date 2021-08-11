@@ -10,6 +10,14 @@ import WildService from './domain/services/wild';
 
 const client = new Discord.Client();
 
+client.once("ready", () => {
+    console.log("I am ready !");
+    client.user.setActivity({
+        name: "p!help",
+        url: "https://github.com/Eoniz/PokeCord"
+    });
+});
+
 client.on('message', async (message) => {
     if (message.author.bot) {
         return;
@@ -71,10 +79,9 @@ client.on('message', async (message) => {
         }
     }
     
-
     await Commands[command].execute(
         message, 
-        (args as string[]).filter(v => v.length > 0),
+        (args as Array<string | number>).map(v => v.toString()).filter(v => v.toString().length > 0),
         kwargs
     );
 });

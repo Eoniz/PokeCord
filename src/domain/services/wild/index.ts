@@ -21,6 +21,11 @@ export type AttemptToCatchResults = {
 
 class WildService {
     static async tryToSpawnWildPokemon (user_id: string): Promise<Pokemon | null> {
+        const user = await fb.usersCollections.doc(user_id).get();
+        if (!user.exists) {
+            return;
+        }
+
         const activeWild = await fb.wildCollections.doc(user_id).get();
 
         if (activeWild.exists) {

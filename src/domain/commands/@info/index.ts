@@ -10,7 +10,7 @@ const info: ICommand = {
     execute: async (message, args) => {
         const user = await UserService.getUserById(message.author.id);
         if (!user) {
-            message.reply("You havn't started yet. Type `p!start` !");
+            message.reply("You haven't started yet. Type `p!start` !");
             return;
         }
 
