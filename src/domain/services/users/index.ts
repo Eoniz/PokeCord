@@ -124,15 +124,16 @@ class UserService {
             return [false, null];
         }
 
+        const xpWon = Math.ceil(config.game.xpMinPerMessage + (Math.random() * (config.game.xpMaxPerMessage - config.game.xpMinPerMessage)));
         const nextData = {...data};
-        nextData.pokemons[data.active_pokemon].current_xp += 1;
+        nextData.pokemons[data.active_pokemon].current_xp += xpWon;
         nextData.last_msg_timestamp = Date.now();
 
         let leveledUp = false;
         if (nextData.pokemons[data.active_pokemon].current_xp >= nextData.pokemons[data.active_pokemon].next_level_xp_needed) {
             nextData.pokemons[data.active_pokemon].level = nextData.pokemons[data.active_pokemon].level + 1;
             nextData.pokemons[data.active_pokemon].current_xp = nextData.pokemons[data.active_pokemon].current_xp % nextData.pokemons[data.active_pokemon].next_level_xp_needed;
-            nextData.pokemons[data.active_pokemon].next_level_xp_needed = 100 + (25 * nextData.pokemons[data.active_pokemon].level - 1);
+            nextData.pokemons[data.active_pokemon].next_level_xp_needed = 100 + (25 * (nextData.pokemons[data.active_pokemon].level - 1));
             leveledUp = true;
         }
 

@@ -22,6 +22,8 @@ const loadConfig = () => {
             timeBetweenXp: Number.parseInt(process.env["GAME_TIME_BETWEEN_XP"], 10) || 60,
             resetWildFightAfter: Number.parseInt(process.env["GAME_RESET_WILD_FIGHT_AFTER"], 10) || 600,
             chanceToSpawnWildPokemon: Number.parseFloat(process.env["GAME_CHANCE_TO_SPAWN_WILD_POKEMON"]) || 50.0,
+            xpMinPerMessage: Number.parseInt(process.env["GAME_XP_MIN_PER_MESSAGE"], 10) || 10,
+            xpMaxPerMessage: Number.parseInt(process.env["GAME_XP_MAX_PER_MESSAGE"], 10) || 30,
         }
     }
 };
