@@ -2,6 +2,9 @@
 
 My own implementation of https://pokecord.xyz/
 
+## Image
+![alt text](img/img01.png)
+
 ## Getting Started
 
 Create a .venv file containing all of these informations
