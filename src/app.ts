@@ -1,20 +1,14 @@
 import express from "express";
 import http from "http";
-import fs from "fs";
 import * as Discord from 'discord.js';
 import initCommands, { Commands } from './domain/commands';
 import config from './infrastructure/config';
 import minimist from 'minimist-string';
 import fb from './infrastructure/firebase';
 import { pokedex } from './temp';
-import UserService from './domain/services/users';
-import WildService from './domain/services/wild';
-import SettingsService from "./domain/services/settings";
+import UserService from "./domain/services/users";
 import MessagesService from "./domain/services/message";
-import { LocalDB } from "./domain/csv-db/localdb";
-import path from 'path';
-import { PokemonFactory } from "./domain/factories/pokemon";
-import PokedexService from "./domain/services/pokedex";
+import EncountersService from "./domain/services/encounters";
 
 
 export const client = new Discord.Client();
@@ -25,11 +19,6 @@ client.once("ready", () => {
         name: "p!help",
         url: "https://github.com/Eoniz/PokeCord"
     });
-
-    fs.writeFileSync(
-        path.join(__dirname, "../", "output.json"), 
-        JSON.stringify(PokemonFactory.generatePokemon({pokemon_id: 1}), null, "\t")
-    );
 });
 
 client.on('message', async (message) => {
@@ -41,29 +30,25 @@ client.on('message', async (message) => {
         const [leveledUp, leveledUpPokemon] = await UserService.xpActivePokemon(message.author.id);
         if (leveledUp) {
             const embed = new Discord.MessageEmbed()
-                .setTitle(`Your pokemon leveled up!`)
+                .setTitle(`Congratulations ${message.author.username}, your pokemon just leveled up!`)
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
-                .setDescription(`Your pokémon is now level ${leveledUpPokemon.level}`)
-                .setImage(leveledUpPokemon.img);
+                .setDescription(`Your pokémon is now level ${leveledUpPokemon.level.level}`)
+                .setImage(leveledUpPokemon.meta.img);
             
                 await MessagesService.send({ embed: embed });
         }
         
-        const pokemon = await WildService.tryToSpawnWildPokemon(message.author.id);
+        const pokemon = await EncountersService.tryToSpawnWildPokemon(message.author.id);
         if (pokemon) {
             const embed = new Discord.MessageEmbed()
-                .setTitle(`A wild pokémon has appeared! (tip: ${pokemon.name})`)
+                .setTitle(`A wild pokémon (level ${pokemon.level.level}) has appeared! (tip: ${pokemon.meta.identifier})`)
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
-                .setDescription(`Guess the pokémon and type p!catch <pokémon> to catch it!\n\n**Type(s):** ${pokemon.type.join(' / ')}\n**Weaknesses:** ${pokemon.weaknesses.join(' / ')}\n**Weight:** ${pokemon.weight}\n**Height:** ${pokemon.height}\n`)
-                .setImage(pokemon.img)
+                .setDescription(`Guess the pokémon and type p!catch <pokémon> to catch it!`)
+                .setImage(pokemon.meta.img)
                 .setFooter("Time left: 10:00");
             
-            let channelId = await SettingsService.getDiscordChannelOutput();
-            if (!channelId) {
-                channelId = message.channel.id;
-            }
             await MessagesService.replyTo(message.author, "A wild pokémon has appeared!");
             await MessagesService.send({ embed: embed });
         }

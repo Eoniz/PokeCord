@@ -1,13 +1,14 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
 const select: ICommand = {
     name: "select",
     description: "Select active pokemon.",
     execute: async (message, args) => {
-        const user = await UserService.getUserById(message.author.id);
+        const user = await UserService.getById(message.author.id);
         if (!user) {
             message.reply("You haven't started yet. Type `p!start` !");
             return;
@@ -21,7 +22,7 @@ const select: ICommand = {
         try {
             const pokemonIdToSelect = Number.parseInt(args[0], 10);
 
-            const pokemon = user.pokemons.find((pok) => pok.id === pokemonIdToSelect);
+            const pokemon = user.pokemons[pokemonIdToSelect];
             if (!pokemon) {
                 message.reply("This pokemon does not exist. Type p!pokemon to show your pokemons.");
                 return;
@@ -33,10 +34,10 @@ const select: ICommand = {
                 .setTitle("Your new friend!")
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
-                .setDescription(`${capitalize(pokemon.name)} is now your active pokemon`)
-                .setImage(pokemon.img);
+                .setDescription(`${capitalize(pokemon.meta.identifier)} is now your active pokemon`)
+                .setImage(pokemon.meta.img);
 
-            message.channel.send({ embed: embed });
+            MessagesService.send({ embed: embed });
         } catch (e) {
             message.reply("Usage p!select <pokemon number>");
             return;

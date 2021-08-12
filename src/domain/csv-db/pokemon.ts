@@ -18,10 +18,10 @@ export type TPokemonCsv = {
     img: string;
 
     // binds
-    species?: TSpeciesCsv;
-    evolution?: TPokemonEvolutionCsv;
-    pokemonBaseStats?: TPokemonStatsCsv[];
-    moves?: TPokemonMoveCsv[];
+    species: TSpeciesCsv;
+    evolution: TPokemonEvolutionCsv;
+    pokemonBaseStats: TPokemonStatsCsv[];
+    moves: TPokemonMoveCsv[];
 }
 
 export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {

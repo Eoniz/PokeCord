@@ -11,7 +11,7 @@ const pokemon: ICommand = {
         const MAX_PER_PAGE = 25;
         let page = 1;
         
-        const user = await UserService.getUserById(message.author.id);
+        const user = await UserService.getById(message.author.id);
         if (!user) {
             message.reply("You haven't started yet. Type `p!start` !");
             return;
@@ -35,8 +35,10 @@ const pokemon: ICommand = {
 
         const desc: string[] = [];
         const sorted = user.pokemons.slice(paginationStart, paginationEnd).sort((a, b) => a.id - b.id);
+        let i = 0;
         for (const pokemon of sorted) {
-            desc.push(`${pokemon.id}: **${capitalize(pokemon.name)}** | Level ${pokemon.level}`);
+            desc.push(`${i}: **${capitalize(pokemon.meta.identifier)}** | Level ${pokemon.level.level}`);
+            i++;
         }
         
         const embed = new Discord.MessageEmbed()
@@ -44,8 +46,8 @@ const pokemon: ICommand = {
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
             .setDescription(desc.join('\n'))
-            .setImage(user.active_pokemon.img)
-            .setFooter(`Your active pokemon is: ${capitalize(user.active_pokemon.name)} (level ${user.active_pokemon.level})\nShowing ${((page - 1) * MAX_PER_PAGE) + 1}-${(page - 1) * MAX_PER_PAGE + desc.length} of ${user.pokemons.length} pokemons (page ${page}/${maxPage})\n\nType p!pokemon <page number> for showing the next ones\nType p!select <pokemon number> to select your active pokemon`)
+            .setImage(user.active_pokemon.meta.img)
+            .setFooter(`Your active pokemon is: ${capitalize(user.active_pokemon.meta.identifier)} (level ${user.active_pokemon.level.level})\nShowing ${((page - 1) * MAX_PER_PAGE) + 1}-${(page - 1) * MAX_PER_PAGE + desc.length} of ${user.pokemons.length} pokemons (page ${page}/${maxPage})\n\nType p!pokemon <page number> for showing the next ones\nType p!select <pokemon number> to select your active pokemon`)
         
         MessagesService.send({ embed: embed });
     }

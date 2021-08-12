@@ -1,5 +1,5 @@
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
-import PokedexService from '../../services/pokedex';
+import { capitalize } from "../../../infrastructure/utils/string";
 import UserService from '../../services/users';
 
 const pick: ICommand = {
@@ -17,24 +17,20 @@ const pick: ICommand = {
             return;
         }
 
-        const pokemon = await PokedexService.getByName(args[0].toLowerCase());
         if (!ALLOWED_POKEMONS.includes(args[0].toLowerCase())) {
             message.reply("You can't choose this pokémon as starter ! Either Bulbasaur, Charmender, or Squirtle. Use p!pick <pokemon>");
             return;
         }
 
-        if (!pokemon) {
-            message.reply("You can't choose this pokémon as starter ! Either Bulbasaur, Charmender, or Squirtle. Use p!pick <pokemon>");
-            return;
-        }
+        const starter = args[0] as "bulbasaur" | "charmander" | "squirtle";
 
-        const [inserted, user] = await UserService.registerUser(message.author.id, pokemon);
+        const [inserted, user] = await UserService.registerUser(message.author.id, starter);
         if (!inserted) {
             message.reply("You already chose your starter !");
             return;
         }
 
-        message.channel.send(`Congratulations! \`${args[0].slice(0, 1).toUpperCase()}${args[0].slice(1).toLowerCase()}\` is your first pokémon!`);
+        message.channel.send(`Congratulations! \`${capitalize(args[0])}\` is your first pokémon!`);
     }
 }
 
