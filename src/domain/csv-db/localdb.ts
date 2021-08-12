@@ -1,9 +1,41 @@
+import { PokemonColorsDB } from "./colors";
+import { EvolutionTriggerDB } from "./evolution_triggers";
+import { GenderDB } from "./gender";
+import { HabitatDB } from "./habitat";
+import { ItemDB } from "./item";
+import { LocationDB } from "./location";
+import { MoveDB } from "./move";
+import { MoveDamageClassDB } from "./move_damage_class";
+import { MoveTargetDB } from "./move_target";
 import { PokemonDB } from "./pokemon";
 import { PokemonEvolutionDB } from "./pokemon_evolution";
+import { PokemonMoveDB } from "./pokemon_moves";
+import { PokemonMoveMethodDB } from "./pokemon_move_methods";
+import { PokemonStatsDB } from "./pokemon_stats";
+import { RegionDB } from "./region";
+import { PokemonShapeDB } from "./shape";
 import { SpeciesDB } from "./species";
+import { StatsDB } from "./stats";
+import { TypeDB } from "./type";
 
 export class LocalDB {
     static pokemons: PokemonDB = new PokemonDB();
     static species: SpeciesDB = new SpeciesDB();
     static pokemonEvolution: PokemonEvolutionDB = new PokemonEvolutionDB();
+    static evolutionTrigger: EvolutionTriggerDB = new EvolutionTriggerDB();
+    static items: ItemDB = new ItemDB();
+    static genders: GenderDB = new GenderDB();
+    static locations: LocationDB = new LocationDB();
+    static regions: RegionDB = new RegionDB();
+    static habitats: HabitatDB = new HabitatDB();
+    static pokemonColors: PokemonColorsDB = new PokemonColorsDB();
+    static pokemonShapes: PokemonShapeDB = new PokemonShapeDB();
+    static pokemonStats: PokemonStatsDB = new PokemonStatsDB();
+    static pokemonMoves: PokemonMoveDB = new PokemonMoveDB();
+    static pokemonMoveMethods: PokemonMoveMethodDB = new PokemonMoveMethodDB();
+    static stats: StatsDB = new StatsDB();
+    static moves: MoveDB = new MoveDB();
+    static types: TypeDB = new TypeDB();
+    static moveTargets: MoveTargetDB = new MoveTargetDB();
+    static moveDamageClasses: MoveDamageClassDB = new MoveDamageClassDB();
 }

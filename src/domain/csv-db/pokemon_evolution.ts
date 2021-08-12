@@ -1,5 +1,9 @@
+import { TEvolutionTriggerCsv } from "./evolution_triggers";
+import { TGenderCsv } from "./gender";
 import { AbstractCSVDB } from "./index";
-import { TPokemonCsv } from "./pokemon";
+import { TItemCsv } from "./item";
+import { TLocationCsv } from "./location";
+import { TSpeciesCsv } from "./species";
 
 export type TPokemonEvolutionCsv = {
     id: number;
@@ -21,13 +25,22 @@ export type TPokemonEvolutionCsv = {
     trade_species_id: number;
     needs_overworld_rain: number;
     turn_upside_down: number;
-    evolved_species: TPokemonCsv;
+
+    evolution_trigger?: TEvolutionTriggerCsv;
+    evolved_species?: TSpeciesCsv;
+    item_trigger?: TItemCsv;
+    gender?: TGenderCsv;
+    location?: TLocationCsv;
 }
 
 export class PokemonEvolutionDB extends AbstractCSVDB<TPokemonEvolutionCsv> {
     constructor() {
         super('pokemon_evolution.csv');
 
-        this.bindOneToOne("evolved_species", "evolved_species_id", "id", "pokemons");
+        this.bindOneToOne("evolved_species", "evolved_species_id", "id", "species");
+        this.bindOneToOne("evolution_trigger", "evolution_trigger_id", "id", "evolutionTrigger");
+        this.bindOneToOne("item_trigger", "trigger_item_id", "id", "items");
+        this.bindOneToOne("gender", "gender_id", "id", "genders");
+        this.bindOneToOne("location", "location_id", "id", "locations");
     }
 }

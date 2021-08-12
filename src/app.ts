@@ -1,5 +1,6 @@
 import express from "express";
 import http from "http";
+import fs from "fs";
 import * as Discord from 'discord.js';
 import initCommands, { Commands } from './domain/commands';
 import config from './infrastructure/config';
@@ -11,6 +12,9 @@ import WildService from './domain/services/wild';
 import SettingsService from "./domain/services/settings";
 import MessagesService from "./domain/services/message";
 import { LocalDB } from "./domain/csv-db/localdb";
+import path from 'path';
+import { PokemonFactory } from "./domain/factories/pokemon";
+import PokedexService from "./domain/services/pokedex";
 
 
 export const client = new Discord.Client();
@@ -22,7 +26,10 @@ client.once("ready", () => {
         url: "https://github.com/Eoniz/PokeCord"
     });
 
-    console.log(LocalDB.pokemons.getById(1));
+    fs.writeFileSync(
+        path.join(__dirname, "../", "output.json"), 
+        JSON.stringify(PokemonFactory.generatePokemon({pokemon_id: 1}), null, "\t")
+    );
 });
 
 client.on('message', async (message) => {
@@ -138,3 +145,14 @@ app.get('/', (req, res) => {
 setInterval(function() {
     http.get("http://floating-hamlet-05414.herokuapp.com/")
 }, 150000);
+
+// const g = async function() {
+//     const desc: string[] = ["id,img"];
+
+//     for (let i = 1; i <= 151; i++) {
+//         const pok = await PokedexService.getById(i);
+//         desc.push(`${i},${pok.img}`);
+//     }
+    
+//     console.log(desc.join('\n'));
+// }();

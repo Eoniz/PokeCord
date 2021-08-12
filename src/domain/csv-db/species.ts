@@ -1,4 +1,7 @@
+import { TColorCsv } from "./colors";
+import { THabitatCsv } from "./habitat";
 import { AbstractCSVDB } from "./index";
+import { TShapeCsv } from "./shape";
 
 export type TSpeciesCsv = {
     id: number;
@@ -21,10 +24,20 @@ export type TSpeciesCsv = {
     is_mythical: number;
     order: number;
     conquest_order: number;
+
+    color?: TColorCsv;
+    evolves_from_species: TSpeciesCsv;
+    habitat?: THabitatCsv;
+    shape?: TShapeCsv;
 }
 
 export class SpeciesDB extends AbstractCSVDB<TSpeciesCsv> {
     constructor() {
         super('pokemon_species.csv');
+
+        this.bindOneToOne("color", "color_id", "id", "pokemonColors");
+        this.bindOneToOne("evolves_from_species", "evolves_from_species_id", "id", "species");
+        this.bindOneToOne("habitat", "habitat_id", "id", "habitats");
+        this.bindOneToOne("shape", "shape_id", "id", "pokemonShapes");
     }
 }
