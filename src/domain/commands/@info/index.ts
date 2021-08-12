@@ -4,6 +4,13 @@ import { capitalize } from '../../../infrastructure/utils/string';
 import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
+const generateXpBar = (currentXp: number, nextLevelXp: number) => {
+    const LENGTH = 10;
+    const nbFilled = Math.floor(currentXp * LENGTH / nextLevelXp);
+
+    return `[${":green_square:".repeat(nbFilled)}${":black_large_square:".repeat(LENGTH - nbFilled)}]`;
+}
+
 const info: ICommand = {
     name: "info",
     description: "Informations about your active pokemon.",
@@ -16,6 +23,7 @@ const info: ICommand = {
 
 
         const lvl = `${user.active_pokemon.level.current_xp}/${user.active_pokemon.level.next_lvl_xp}XP`;
+        const xpBar = generateXpBar(user.active_pokemon.level.current_xp, user.active_pokemon.level.next_lvl_xp);
         const weight = `**Weight:**${user.active_pokemon.meta.weight}`;
         const height = `**Height:** ${user.active_pokemon.meta.height}`;
         const moves: string[] = ["**Moves:**"];
@@ -28,10 +36,10 @@ const info: ICommand = {
         }
 
         const embed = new Discord.MessageEmbed()
-            .setTitle(`Level ${user.active_pokemon.level.level} ${capitalize(user.active_pokemon.meta.identifier)}`)
+            .setTitle(`${capitalize(user.active_pokemon.meta.identifier)}`)
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
-            .setDescription(`${lvl}\n\n${weight}\n${height}\n\n${moves.join('\n')}\n`)
+            .setDescription(`${xpBar}\n**Level ${user.active_pokemon.level.level}**\n${lvl}\n\n${weight}\n${height}\n\n${moves.join('\n')}\n`)
             .setImage(user.active_pokemon.meta.img);
         
         MessagesService.send({ embed: embed });
