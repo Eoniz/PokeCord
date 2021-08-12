@@ -10,6 +10,7 @@ export type AbstractUser = {
 
 export type FbPokemon = {
     id: number;
+    inventory_id: number;
     stats: PokemonStats;
     level: PokemonLevel;
     available_moves: PokemonMove[];
@@ -20,27 +21,35 @@ export type FbUser = AbstractUser & {
     active_pokemon: number;
 }
 
+export type PokemonInInventory = Pokemon & { inventory_id: number };
+
 export type User = AbstractUser & {
-    pokemons: Array<Pokemon>;
-    active_pokemon: Pokemon;
+    pokemons: Array<PokemonInInventory>;
+    active_pokemon: Pokemon ;
 }
 
 class UserService {
-    private static _fromFbPokemonToPokemon(pokemon: FbPokemon): Pokemon {
-        return PokemonFactory.generatePokemon({
-            level: pokemon.level,
-            stats: pokemon.stats,
-            pokemon_id: pokemon.id ,
-            moves: pokemon.available_moves
+    private static _fromFbPokemonToPokemon(meta: FbPokemon): PokemonInInventory {
+        const pokemon: Pokemon = PokemonFactory.generatePokemon({
+            level: meta.level,
+            stats: meta.stats,
+            pokemon_id: meta.id ,
+            moves: meta.available_moves,
         });
+
+        return ({
+            inventory_id: meta.inventory_id,
+            ...pokemon
+        } as PokemonInInventory);
     }
 
-    private static _fromPokemonToFbPokemon (pokemon: Pokemon): FbPokemon {
+    private static _fromPokemonToFbPokemon (pokemon: Pokemon, inventory_id: number): FbPokemon {
         return {
             available_moves: pokemon.availableMoves,
             id: pokemon.id,
             level: pokemon.level,
-            stats: pokemon.stats
+            stats: pokemon.stats,
+            inventory_id: inventory_id
         };
     }
 
@@ -106,7 +115,8 @@ class UserService {
                     id: pokemon.id,
                     level: pokemon.level,
                     stats: pokemon.stats,
-                    available_moves: pokemon.availableMoves
+                    available_moves: pokemon.availableMoves,
+                    inventory_id: 0
                 }
             ]
         };
@@ -165,7 +175,7 @@ class UserService {
 
         const nextPokemons: FbPokemon[] = [
             ...user.pokemons, 
-            UserService._fromPokemonToFbPokemon(pokemon)
+            UserService._fromPokemonToFbPokemon(pokemon, user.pokemons.length)
         ];
 
         await fb.usersCollections.doc(userId).update({

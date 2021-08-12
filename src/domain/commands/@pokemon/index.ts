@@ -34,11 +34,9 @@ const pokemon: ICommand = {
         const paginationEnd = page * MAX_PER_PAGE;
 
         const desc: string[] = [];
-        const sorted = user.pokemons.slice(paginationStart, paginationEnd).sort((a, b) => a.id - b.id);
-        let i = 0;
+        const sorted = user.pokemons.slice(paginationStart, paginationEnd).sort((a, b) => a.inventory_id - b.inventory_id);
         for (const pokemon of sorted) {
-            desc.push(`${i}: **${capitalize(pokemon.meta.identifier)}** | Level ${pokemon.level.level}`);
-            i++;
+            desc.push(`${pokemon.inventory_id}: **${capitalize(pokemon.meta.identifier)}** | Level ${pokemon.level.level}`);
         }
         
         const embed = new Discord.MessageEmbed()
