@@ -5,7 +5,7 @@ import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
 const generateXpBar = (currentXp: number, nextLevelXp: number) => {
-    const LENGTH = 10;
+    const LENGTH = 15;
     const nbFilled = Math.floor(currentXp * LENGTH / nextLevelXp);
 
     return `[${":green_square:".repeat(nbFilled)}${":black_large_square:".repeat(LENGTH - nbFilled)}]`;
