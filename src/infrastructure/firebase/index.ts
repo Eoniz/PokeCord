@@ -10,12 +10,14 @@ const loadFirebase = () => {
     const pokemonsCollections = db.collection('pokemons');
     const usersCollections = db.collection('users');
     const wildCollections = db.collection('wild');
+    const settingsCollections = db.collection('config');
 
     return {
         db,
         usersCollections,
         pokemonsCollections,
-        wildCollections
+        wildCollections,
+        settingsCollections
     }
 };
 

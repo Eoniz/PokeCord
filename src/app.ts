@@ -9,6 +9,7 @@ import { pokedex } from './temp';
 import PokedexService from './domain/services/pokedex';
 import UserService from './domain/services/users';
 import WildService from './domain/services/wild';
+import SettingsService from "./domain/services/settings";
 
 const client = new Discord.Client();
 
@@ -48,8 +49,14 @@ client.on('message', async (message) => {
                 .setImage(pokemon.img)
                 .setFooter("Time left: 10:00");
             
-            await message.reply("A wild pokémon has appeared!");
-            await message.reply({ embed: embed });
+            let channelId = await SettingsService.getDiscordChannelOutput();
+            if (!channelId) {
+                channelId = message.channel.id;
+            }
+            await (<Discord.TextChannel> client.channels.cache.get(channelId)).send("A wild pokémon has appeared!", {
+                reply: message.author,
+            });
+            await (<Discord.TextChannel> client.channels.cache.get(channelId)).send({ embed: embed });
         }
 
         return;
@@ -72,7 +79,7 @@ client.on('message', async (message) => {
              const newArgs = args.slice(i);
              await Commands[commandName].execute(
                 message, 
-                (newArgs as string[]).filter(v => v.length > 0),
+                (newArgs as Array<string | number>).map(v => v.toString()).filter(v => v.toString().length > 0),
                 kwargs
             );
 

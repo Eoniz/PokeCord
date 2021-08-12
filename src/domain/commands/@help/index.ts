@@ -10,7 +10,7 @@ const help: ICommand = {
         const descriptions = Object.values(Commands).map(command => `- ${config.discord.prefix}.${command.name}: ${command.description}`);
 
         let title = "Help Command";
-        const description = "Type `lrem.help` command for more info on commands.\nYou can also type `lrem.help command` for more info on a specific command.";
+        const description = `Type \`${config.discord.prefix}help\` command for more info on commands.\nYou can also type \`${config.discord.prefix}help command\` for more info on a specific command.`;
         const color = 16497180;
         let commandsValue = "```\n" + descriptions.join('\n\n')  + "```";
 
@@ -32,7 +32,7 @@ const help: ICommand = {
                     `${command.description}\n${Object.values(command.children).map(subcommand => `\t- \`${subcommand.name}\`: ${subcommand.description}`).join('\n')}`
                 ) : command.description;
                 return ({
-                    name: command.name,
+                    name: `${config.discord.prefix}${command.name}`,
                     value: description
                 });
             })

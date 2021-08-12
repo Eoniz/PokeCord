@@ -3,6 +3,7 @@ import fb from "../../../infrastructure/firebase"
 import PokedexService, { CaughtPokemon, CaughtPokemonMeta, Pokemon } from "../pokedex";
 
 export type AbstractUser = {
+    is_admin: boolean;
     discord_id: string;
     last_msg_timestamp: number;
     inventory: Array<any>;
@@ -21,6 +22,16 @@ export type User = AbstractUser & {
 }
 
 class UserService {
+    static async isUserAdmin(userId: string): Promise<boolean | null> {
+        const user = await fb.usersCollections.doc(userId).get();
+        
+        if (!user.exists) {
+            return null;
+        }
+
+        return (user.data() as UserDB).is_admin;
+    }
+
     private static async _fromPokemonInPokedexToCaughtPokemon (meta: PokemonInPokedex): Promise<CaughtPokemon | null> {
         const pokemon = await PokedexService.getById(meta.pokemon_id);
         if (pokemon !== null) {
@@ -94,6 +105,7 @@ class UserService {
         }
 
         const data: UserDB = {
+            is_admin: false,
             discord_id: id,
             inventory: [],
             last_msg_timestamp: Date.now(),
@@ -145,6 +157,26 @@ class UserService {
         }
 
         return [false, null];
+    }
+
+    static async lvlUpActivePokemon(id: string): Promise<[boolean, CaughtPokemon | null]> {
+        const userDB = await fb.usersCollections.doc(id).get();
+        
+        if (!userDB.exists) {
+            return [false, null];
+        }
+
+        const data = userDB.data() as UserDB;
+        const nextData = {...data};
+        nextData.pokemons[data.active_pokemon].level = nextData.pokemons[data.active_pokemon].level + 1;
+        nextData.pokemons[data.active_pokemon].current_xp = 1;
+        nextData.pokemons[data.active_pokemon].next_level_xp_needed = 100 + (25 * (nextData.pokemons[data.active_pokemon].level - 1));
+
+
+        await fb.usersCollections.doc(id).update(nextData);
+
+        const caughtPokemon = await UserService._fromPokemonInPokedexToCaughtPokemon(nextData.pokemons[data.active_pokemon]);
+        return [true, caughtPokemon];
     }
 
     static async addPokemonToPokedex(userId: string, pokemon: Pokemon): Promise<CaughtPokemon> {
