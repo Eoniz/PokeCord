@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import config from '../../../infrastructure/config';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
+import MessagesService from '../../services/message';
 import WildService from '../../services/wild';
 
 const timeLeftStr = (to: number) => {
@@ -34,7 +35,7 @@ const catchCommand: ICommand = {
             .setImage(pokemon.img)
             .setFooter(`Time left: ${timeLeftStr(endTime)}`)
     
-        message.channel.send({ embed: embed });
+        MessagesService.send({ embed: embed });
     }
 }
 

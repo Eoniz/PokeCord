@@ -10,8 +10,9 @@ import PokedexService from './domain/services/pokedex';
 import UserService from './domain/services/users';
 import WildService from './domain/services/wild';
 import SettingsService from "./domain/services/settings";
+import MessagesService from "./domain/services/message";
 
-const client = new Discord.Client();
+export const client = new Discord.Client();
 
 client.once("ready", () => {
     console.log("I am ready !");
@@ -36,7 +37,7 @@ client.on('message', async (message) => {
                 .setDescription(`Your pokémon is now level ${leveledUpPokemon.level}`)
                 .setImage(leveledUpPokemon.img);
             
-            message.channel.send({ embed: embed });
+                await MessagesService.send({ embed: embed });
         }
         
         const pokemon = await WildService.tryToSpawnWildPokemon(message.author.id);
@@ -53,10 +54,8 @@ client.on('message', async (message) => {
             if (!channelId) {
                 channelId = message.channel.id;
             }
-            await (<Discord.TextChannel> client.channels.cache.get(channelId)).send("A wild pokémon has appeared!", {
-                reply: message.author,
-            });
-            await (<Discord.TextChannel> client.channels.cache.get(channelId)).send({ embed: embed });
+            await MessagesService.replyTo(message.author, "A wild pokémon has appeared!");
+            await MessagesService.send({ embed: embed });
         }
 
         return;

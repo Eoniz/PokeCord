@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
 const pokemon: ICommand = {
@@ -46,7 +47,7 @@ const pokemon: ICommand = {
             .setImage(user.active_pokemon.img)
             .setFooter(`Your active pokemon is: ${capitalize(user.active_pokemon.name)} (level ${user.active_pokemon.level})\nShowing ${((page - 1) * MAX_PER_PAGE) + 1}-${(page - 1) * MAX_PER_PAGE + desc.length} of ${user.pokemons.length} pokemons (page ${page}/${maxPage})\n\nType p!pokemon <page number> for showing the next ones\nType p!select <pokemon number> to select your active pokemon`)
         
-        message.channel.send({ embed: embed });
+        MessagesService.send({ embed: embed });
     }
 }
 

@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
+import MessagesService from '../../services/message';
 
 const start: ICommand = {
     name: "start",
@@ -12,7 +13,7 @@ const start: ICommand = {
             .setDescription("Welcome to the world of pokémon! To begin play, choose one of these pokémon:\nBulbasaur / Charmander / Squirtle\n\n**Use p!pick <pokemon>**\n(for example `p!pick Squirtle`)\n\n**Your pokemon will gain XP as you talk to your friends in chat. Good luck!**\n")
             .setImage("https://i.imgur.com/vBx2fVU.jpg");
 
-        message.channel.send({ embed: embed });
+        MessagesService.send({ embed: embed });
     }
 }
 

@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 import WildService from '../../services/wild';
 
@@ -35,7 +36,7 @@ const catchCommand: ICommand = {
                 .setDescription(`You caught a ${capitalize(pokemon.name)}!\n\n**Added to your Pokédex**`)
                 .setImage(pokemon.img);
             
-            message.channel.send({ embed: embed });
+            await MessagesService.send({ embed: embed });
 
             await UserService.addPokemonToPokedex(message.author.id, pokemon);
 
@@ -43,11 +44,11 @@ const catchCommand: ICommand = {
         }
 
         if (released) {
-            message.channel.send("Oh no... The pokémon has run away...");
+            await MessagesService.send("Oh no... The pokémon has run away...");
             return;
         }
 
-        message.reply(`This is the wrong pokémon! ${attempts_left} tries left (${current_attempt}/${max_attempt})`);
+        await MessagesService.replyTo(message.author, `This is the wrong pokémon! ${attempts_left} tries left (${current_attempt}/${max_attempt})`);
     }
 }
 

@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
 const info: ICommand = {
@@ -20,7 +21,7 @@ const info: ICommand = {
             .setDescription(`${user.active_pokemon.current_xp}/${user.active_pokemon.next_level_xp_needed}XP\n\n**Type(s):** ${user.active_pokemon.type.join(' / ')}\n**Weaknesses:** ${user.active_pokemon.weaknesses.join(' / ')}\n**Weight:** ${user.active_pokemon.weight}\n**Height:** ${user.active_pokemon.height}\n`)
             .setImage(user.active_pokemon.img);
         
-        message.channel.send({ embed: embed });
+        MessagesService.send({ embed: embed });
     }
 }
 

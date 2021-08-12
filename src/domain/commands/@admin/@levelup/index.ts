@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import config from '../../../../infrastructure/config';
 import { ICommand } from '../../../../infrastructure/types/commands/commands.types';
-import PokedexService from '../../../services/pokedex';
+import MessagesService from '../../../services/message';
 import UserService from '../../../services/users';
 
 const levelup: ICommand = {
@@ -36,7 +36,7 @@ const levelup: ICommand = {
                 .setDescription(`Your pokémon is now level ${pokemon.level}`)
                 .setImage(pokemon.img);
             
-            message.channel.send({ embed: embed });
+            await MessagesService.send({ embed: embed });
         }
     }
 }
