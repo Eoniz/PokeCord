@@ -5,8 +5,8 @@
   "main": "build/app.js",
   "scripts": {
     "start": "node build/app.js",
-    "build": "rm -fr build && tsc",
-    "startDev": "rm -fr build && tsc && node build/app.js",
+    "build": "rm -fr build && tsc && cp -r ./src/csvs build/csvs",
+    "startDev": "npm run build && node build/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.5.0",
+    "csv-parse": "^4.16.0",
     "discord.js": "^12.5.3",
     "dotenv": "^8.6.0",
     "express": "^4.17.1",

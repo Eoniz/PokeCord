@@ -6,11 +6,12 @@ import config from './infrastructure/config';
 import minimist from 'minimist-string';
 import fb from './infrastructure/firebase';
 import { pokedex } from './temp';
-import PokedexService from './domain/services/pokedex';
 import UserService from './domain/services/users';
 import WildService from './domain/services/wild';
 import SettingsService from "./domain/services/settings";
 import MessagesService from "./domain/services/message";
+import { LocalDB } from "./domain/csv-db/localdb";
+
 
 export const client = new Discord.Client();
 
@@ -20,6 +21,8 @@ client.once("ready", () => {
         name: "p!help",
         url: "https://github.com/Eoniz/PokeCord"
     });
+
+    console.log(LocalDB.pokemons.getById(1));
 });
 
 client.on('message', async (message) => {
@@ -117,6 +120,7 @@ const initPokedex = () => {
             });
     });
 }
+
 
 // initPokedex();
 
