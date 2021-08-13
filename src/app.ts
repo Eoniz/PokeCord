@@ -9,6 +9,8 @@ import { pokedex } from './temp';
 import UserService from "./domain/services/users";
 import MessagesService from "./domain/services/message";
 import EncountersService from "./domain/services/encounters";
+import { capitalize } from "./infrastructure/utils/string";
+import { generateEvolutionImg } from "./infrastructure/utils/image";
 
 
 export const client = new Discord.Client();
@@ -27,7 +29,7 @@ client.on('message', async (message) => {
     }
 
     if (!message.content.startsWith(config.discord.prefix)) {
-        const [leveledUp, leveledUpPokemon] = await UserService.xpActivePokemon(message.author.id);
+        const [leveledUp, leveledUpPokemon, evolution] = await UserService.xpActivePokemon(message.author.id);
         if (leveledUp) {
             const embed = new Discord.MessageEmbed()
                 .setTitle(`Congratulations ${message.author.username}, your pokemon just leveled up!`)
@@ -37,6 +39,32 @@ client.on('message', async (message) => {
                 .setImage(leveledUpPokemon.meta.img);
             
                 await MessagesService.send({ embed: embed });
+            
+            if (evolution !== null) {
+                const canvas = await generateEvolutionImg([leveledUpPokemon.meta.img, evolution.img]);
+                const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+
+                const embed = new Discord.MessageEmbed()
+                    .setTitle(`${capitalize(leveledUpPokemon.meta.identifier)} wants to evolve !`)
+                    .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
+                    .setColor("#ff0000")
+                    .setDescription(`What ?\n**${leveledUpPokemon.meta.identifier.toUpperCase()}** is evolving !`)
+                    .attachFiles([attachment])
+                    .setImage("attachment://team.png");
+
+                await MessagesService.send({ embed: embed });
+
+                await UserService.evolveActivePokemon(message.author.id);
+
+                const embedEvolved = new Discord.MessageEmbed()
+                    .setTitle(`${capitalize(leveledUpPokemon.meta.identifier)} is now ${evolution.identifier.toUpperCase()} !`)
+                    .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
+                    .setColor("#ff0000")
+                    .setDescription(`Congratulations!`)
+                    .setImage(evolution.img);
+
+                await MessagesService.send({ embed: embedEvolved });
+            }
         }
         
         const pokemon = await EncountersService.tryToSpawnWildPokemon(message.author.id);

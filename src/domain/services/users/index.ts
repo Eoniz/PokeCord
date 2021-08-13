@@ -1,4 +1,6 @@
 import LRU_CACHE from 'lru-cache';
+import { LocalDB } from '../../csv-db/localdb';
+import { TPokemonCsv } from '../../csv-db/pokemon';
 import config from "../../../infrastructure/config";
 import fb from "../../../infrastructure/firebase"
 import { Pokemon, PokemonFactory, PokemonLevel, PokemonMove, PokemonStats } from "../../factories/pokemon";
@@ -196,34 +198,48 @@ class UserService {
         return [true, newFbUser];
     }
 
-    public static async xpActivePokemon (userId: string): Promise<[boolean, Pokemon]> {
+    public static async xpActivePokemon (userId: string): Promise<[boolean, Pokemon, TPokemonCsv]> {
         const user = await UserService.getFbUserById(userId);
 
         if (!user) {
-            return [false, null];
+            return [false, null, null];
         }
 
         const timeBetweenXpInMs = config.game.timeBetweenXp * 1000;
         if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
         // if (Date.now() < 0) {
-            return [false, null];
+            return [false, null, null];
         }
 
         const xpWon = Math.ceil(config.game.xpMinPerMessage + (Math.random() * (config.game.xpMaxPerMessage - config.game.xpMinPerMessage)));
         const updatedUser = {...user};
         const activePokemonIdx = user.pokemons.findIndex((_pok) => _pok.inventory_id === user.team[0]);
         if (activePokemonIdx === -1) {
-            return [false, null];
+            return [false, null, null];
         }
 
         updatedUser.pokemons[activePokemonIdx].level.current_xp += xpWon;
         updatedUser.last_msg_timestamp = Date.now();
 
         let leveledUp = false;
+        let nxtEvolution: TPokemonCsv = null;
         if (updatedUser.pokemons[activePokemonIdx].level.current_xp >= updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp) {
-            updatedUser.pokemons[activePokemonIdx].level.level = Math.floor(updatedUser.pokemons[activePokemonIdx].level.level + 1);
+            const nextLvl = Math.floor(updatedUser.pokemons[activePokemonIdx].level.level + 1);
+            updatedUser.pokemons[activePokemonIdx].level.level = nextLvl;
             updatedUser.pokemons[activePokemonIdx].level.current_xp = updatedUser.pokemons[activePokemonIdx].level.current_xp % updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp;
             updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp = 100 + (25 * (updatedUser.pokemons[activePokemonIdx].level.level - 1));
+            
+            const pokemonMeta = LocalDB.pokemons.getFirstById(updatedUser.pokemons[activePokemonIdx].id);
+            if (
+                pokemonMeta.evolution
+                && nextLvl >= pokemonMeta.evolution.minimum_level 
+                && pokemonMeta.evolution.evolution_trigger 
+                && pokemonMeta.evolution.evolution_trigger.identifier === "level-up"
+                && pokemonMeta.evolution.evolved_species
+            ) {
+                nxtEvolution = LocalDB.pokemons.getFirstById(pokemonMeta.evolution.evolved_species.id);
+            }
+            
             leveledUp = true;
         }
 
@@ -236,10 +252,10 @@ class UserService {
                 level: updatedUser.pokemons[activePokemonIdx].level,
                 stats: updatedUser.pokemons[activePokemonIdx].stats
             });
-            return [leveledUp, caughtPokemon];
+            return [leveledUp, caughtPokemon, nxtEvolution];
         }
 
-        return [false, null];
+        return [false, null, null];
     }
 
     public static async addPokemon (userId: string, pokemon: Pokemon): Promise<boolean> {
@@ -391,6 +407,44 @@ class UserService {
         UserService._cache.set(userId, nextData);
         await fb.usersCollections.doc(userId).update({
             team: team
+        });
+
+        return true;
+    }
+
+    public static async evolveActivePokemon (userId: string) {
+        const user = await UserService.getFbUserById(userId);
+
+        if (!user) {
+            return false;
+        }
+
+        const activePokemonId = user.team[0];
+        const activePokemonIdx = user.pokemons.findIndex((_pok) => _pok.inventory_id === activePokemonId);
+
+        if (activePokemonIdx === -1) {
+            return false;
+        }
+
+        const activePokemon = user.pokemons[activePokemonIdx];
+        const meta = LocalDB.pokemons.getFirstById(activePokemon.id);
+        const nextPokemons = [...user.pokemons];
+
+        if (!meta.evolution || !meta.evolution.evolved_species) {
+            return false;
+        }
+
+        nextPokemons[activePokemonIdx] = {
+            ...activePokemon,
+            id: meta.evolution.evolved_species.id
+        };
+
+        UserService._cache.set(userId, {
+            ...user,
+            pokemons: nextPokemons
+        });
+        await fb.usersCollections.doc(userId).update({
+            pokemons: nextPokemons
         });
 
         return true;
