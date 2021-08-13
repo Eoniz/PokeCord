@@ -173,13 +173,20 @@ export class PokemonFactory {
             ...config
         };
 
+        const RESERVED_IDS = [350];
+
         let pokemon: Pokemon = null;
         while (!pokemon) {
             const MIN_ID = 1;
             const MAX_ID = 151;
+
             const id = MIN_ID + Math.floor(Math.random() * (MAX_ID - MIN_ID));
             const level = Math.max(1, meanLvl + (-5 + Math.floor(Math.random() * 10)));
-    
+            
+            if (RESERVED_IDS.includes(id)) {
+                continue;
+            }
+
             const _pok = PokemonFactory.generatePokemon({
                 level: {
                     current_xp: 1,

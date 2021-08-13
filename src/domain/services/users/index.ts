@@ -226,8 +226,10 @@ class UserService {
         return true;
     }
 
-    public static isUserAdmin (userId: string) {
-        return false;
+    public static async isUserAdmin (userId: string) {
+        const user = await UserService.getFbUserById(userId);
+        console.log(user);
+        return user.is_admin;
     }
 }
 

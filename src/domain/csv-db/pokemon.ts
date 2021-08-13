@@ -29,7 +29,8 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
         super('pokemon.csv');
 
         // Only get the 1st gen
-        this.data = this.data.slice(0, 151);
+        const SPECIAL_IDS = [350];
+        this.data = [...this.data.slice(0, 151), ...this.data.filter((_pok) => SPECIAL_IDS.includes(_pok.id))];
         
         this.compute("img", (pok: TPokemonCsv) => {
             if (pok.id < 10) {
