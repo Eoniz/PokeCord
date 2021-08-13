@@ -33,7 +33,7 @@ export const generateEvolutionImg = async (urls: string[]) => {
         urls = urls.slice(0, 6);
     }
 
-    const canvas = Canvas.createCanvas(400, 200);
+    const canvas = Canvas.createCanvas(600, 300);
     const context = canvas.getContext('2d');
 
     context.fillStyle = "#0E0E0E"
@@ -50,7 +50,7 @@ export const generateEvolutionImg = async (urls: string[]) => {
         const y = 0
 
         const img = pokemonImgs[i];
-        context.drawImage(img, x, y, 200, 200);
+        context.drawImage(img, x, y, 300, 300);
     }
 
     return canvas;
