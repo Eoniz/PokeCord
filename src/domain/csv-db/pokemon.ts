@@ -1,3 +1,4 @@
+import { MAX_POKEMON_ID, MIN_POKEMON_ID } from "../factories/pokemon";
 import { AbstractCSVDB } from "./index";
 import { TPokemonEvolutionCsv } from "./pokemon_evolution";
 import { TPokemonMoveCsv } from "./pokemon_moves";
@@ -28,9 +29,7 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
     constructor() {
         super('pokemon.csv');
 
-        // Only get the 1st gen
-        const SPECIAL_IDS = [350];
-        this.data = [...this.data.slice(0, 151), ...this.data.filter((_pok) => SPECIAL_IDS.includes(_pok.id))];
+        this.data = this.data.slice(MIN_POKEMON_ID - 1, MAX_POKEMON_ID);
         
         this.compute("img", (pok: TPokemonCsv) => {
             if (pok.id < 10) {

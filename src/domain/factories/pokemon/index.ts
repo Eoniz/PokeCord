@@ -36,6 +36,10 @@ type GetRandomPokemonConfig = {
     allow_evolved: boolean;
 }
 
+export const RESERVED_POKEMON_IDS = [350];
+export const MIN_POKEMON_ID = 1;
+export const MAX_POKEMON_ID = 386;
+
 export class Pokemon {
     public id: number;
     public meta: TPokemonCsv;
@@ -173,20 +177,14 @@ export class PokemonFactory {
             ...config
         };
 
-        const RESERVED_IDS = [350];
-
         let pokemon: Pokemon = null;
         while (!pokemon) {
-            const MIN_ID = 1;
-            const MAX_ID = 151;
-
-            const id = MIN_ID + Math.floor(Math.random() * (MAX_ID - MIN_ID));
-            const level = Math.max(1, meanLvl + (-5 + Math.floor(Math.random() * 10)));
-            
-            if (RESERVED_IDS.includes(id)) {
+            const id = MIN_POKEMON_ID + Math.floor(Math.random() * (MAX_POKEMON_ID - MIN_POKEMON_ID));
+            if (RESERVED_POKEMON_IDS.includes(id)) {
                 continue;
             }
 
+            const level = Math.max(1, meanLvl + (-5 + Math.floor(Math.random() * 10)));
             const _pok = PokemonFactory.generatePokemon({
                 level: {
                     current_xp: 1,
