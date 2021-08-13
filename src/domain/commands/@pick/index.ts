@@ -22,7 +22,7 @@ const pick: ICommand = {
             return;
         }
 
-        const starter = args[0] as "bulbasaur" | "charmander" | "squirtle";
+        const starter = args[0].toLowerCase() as "bulbasaur" | "charmander" | "squirtle";
 
         const [inserted, user] = await UserService.registerUser(message.author.id, starter);
         if (!inserted) {
