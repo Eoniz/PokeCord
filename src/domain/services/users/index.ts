@@ -219,8 +219,33 @@ class UserService {
         }
 
         const nextPokemons: FbPokemon[] = user.pokemons.filter((_pok) => _pok.inventory_id !== pokemonId);
-        const nextActiveId = nextPokemons.some((_pok) => _pok.inventory_id === user.active_pokemon) ? user.active_pokemon : 1;
+        const nextActiveId = nextPokemons.some((_pok) => _pok.inventory_id === user.active_pokemon) ? user.active_pokemon : nextPokemons[0].inventory_id;
 
+        const nextUser: FbUser = {
+            ...user,
+            pokemons: nextPokemons,
+            active_pokemon: nextActiveId
+        };
+
+        UserService._cache.set(userId, nextUser);
+        await fb.usersCollections.doc(userId).update({
+            pokemons: nextPokemons,
+            active_pokemon: nextActiveId
+        });
+    }
+
+    public static async releasePokemons (userId: string, inventoryIds: number[]) {
+        const user = await UserService.getFbUserById(userId);
+
+        if (!user) {
+            return false;
+        }
+
+        const nextPokemons: FbPokemon[] = user.pokemons.filter((_pok) => !inventoryIds.includes(_pok.inventory_id));
+        if (nextPokemons.length === 0) {
+            nextPokemons.push(user.pokemons[0]);
+        }
+        const nextActiveId = inventoryIds.includes(user.active_pokemon) ? nextPokemons[0].inventory_id : user.active_pokemon;
         const nextUser: FbUser = {
             ...user,
             pokemons: nextPokemons,
