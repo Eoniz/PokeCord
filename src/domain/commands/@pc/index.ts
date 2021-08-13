@@ -4,9 +4,9 @@ import { capitalize } from '../../../infrastructure/utils/string';
 import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
-const pokemon: ICommand = {
-    name: "pokemon",
-    description: "Informations about your pokemons.",
+const PC: ICommand = {
+    name: "pc",
+    description: "Your pc where all your pokemons are stored in.",
     execute: async (message, args) => {
         const MAX_PER_PAGE = 25;
         let page = 1;
@@ -47,8 +47,8 @@ const pokemon: ICommand = {
             .setImage(user.active_pokemon.meta.img)
             .setFooter(`Your active pokemon is: ${capitalize(user.active_pokemon.meta.identifier)} (level ${user.active_pokemon.level.level})\nShowing ${((page - 1) * MAX_PER_PAGE) + 1}-${(page - 1) * MAX_PER_PAGE + desc.length} of ${user.pokemons.length} pokemons (page ${page}/${maxPage})\n\nType p!pokemon <page number> for showing the next ones\nType p!select <pokemon number> to select your active pokemon`)
         
-        MessagesService.send({ embed: embed });
+        message.channel.send({ embed: embed });
     }
 }
 
-export default pokemon;
+export default PC;

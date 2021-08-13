@@ -16,31 +16,30 @@ const give: ICommand = {
             return;
         }
 
-        let pokemonId = 1;
-        try {
-            pokemonId = Number.parseInt(args[0], 10);
-        } catch (e) { 
-            console.error(e); 
-            message.reply("Bad usage !");
-            return; 
+        let pokemonIds: number[] = [];
+        for (const arg of args) {
+            try {
+                const pokemonId = Number.parseInt(arg, 10);
+                pokemonIds.push(pokemonId);
+            } catch (e) { 
+                continue;
+            }
         }
 
-        const pokemon = PokemonFactory.generatePokemon({
-            pokemon_id: pokemonId
-        });
-
-        console.log(pokemon.meta.identifier);
-        if (!pokemon) {
-            message.reply("This pokemon does not exist !");
-            return;
-        }
+        const pokemons = pokemonIds.filter(a => !Number.isNaN(a))
+            .map((pokemonId) => PokemonFactory.generatePokemon({
+                pokemon_id: pokemonId
+            }))
+            .filter(a => a !== null);
 
         for (const user of message.mentions.users.values()) {
             if (!await UserService.getFbUserById(user.id)) {
                 continue;
             }
 
-            await UserService.addPokemon(user.id, pokemon);
+            for (const pokemon of pokemons) {
+                await UserService.addPokemon(user.id, pokemon);
+            }
         }
 
         message.reply("Done :blush: ");

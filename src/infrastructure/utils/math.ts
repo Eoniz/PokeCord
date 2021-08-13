@@ -7,3 +7,7 @@ export const median = (...numbers: number[]): number => {
  
     return median;
 }
+
+export const getPercent = (currentXp: number, nextLevelXp: number) => {
+    return Math.floor(currentXp * 100 / nextLevelXp);
+}

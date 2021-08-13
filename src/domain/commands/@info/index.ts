@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import { getPercent } from '../../../infrastructure/utils/math';
 import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
@@ -9,10 +10,6 @@ const generateXpBar = (currentXp: number, nextLevelXp: number) => {
     const nbFilled = Math.floor(currentXp * LENGTH / nextLevelXp);
 
     return `[${":green_square:".repeat(nbFilled)}${":black_large_square:".repeat(LENGTH - nbFilled)}]`;
-}
-
-const getPercent = (currentXp: number, nextLevelXp: number) => {
-    return Math.floor(currentXp * 100 / nextLevelXp);
 }
 
 const info: ICommand = {

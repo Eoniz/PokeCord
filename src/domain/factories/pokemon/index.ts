@@ -106,6 +106,10 @@ export class Pokemon {
 
 export class PokemonFactory {
     public static generatePokemon (config: Partial<GeneratePokemonConfig>) {
+        if (config.pokemon_id < MIN_POKEMON_ID || config.pokemon_id > MAX_POKEMON_ID) {
+            return null;
+        }
+
         const pokemonMeta = LocalDB.pokemons.getFirstById(config.pokemon_id);
         const stats = config.stats || PokemonFactory.getBaseStatsFromPokemonMeta(pokemonMeta);
 
@@ -184,7 +188,7 @@ export class PokemonFactory {
                 continue;
             }
 
-            const level = Math.max(1, meanLvl + (-5 + Math.floor(Math.random() * 10)));
+            const level = Math.max(1, Math.floor(meanLvl + (-5 + Math.floor(Math.random() * 10))));
             const _pok = PokemonFactory.generatePokemon({
                 level: {
                     current_xp: 1,

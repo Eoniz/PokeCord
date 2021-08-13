@@ -29,7 +29,7 @@ export type AttemptToCatchResults = {
 class EncountersService {
     private static _cache = new LRU_CACHE<string, FbEncounter>({
         max: 150,
-        maxAge: 1000*60*10
+        maxAge: 1000*60*60
     });
 
     public static async getById (userId: string): Promise<FbEncounter | null> {

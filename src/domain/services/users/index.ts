@@ -7,6 +7,7 @@ export type AbstractUser = {
     id: string;
     last_msg_timestamp: number;
     is_admin: boolean;
+    last_inventory_id: number;
 }
 
 export type FbPokemon = {
@@ -19,22 +20,67 @@ export type FbPokemon = {
 
 export type FbUser = AbstractUser & {
     pokemons: Array<FbPokemon>;
-    active_pokemon: number;
+    team: Array<number>;
 }
 
 export type PokemonInInventory = Pokemon & { inventory_id: number };
 
 export type User = AbstractUser & {
     pokemons: Array<PokemonInInventory>;
-    active_pokemon: Pokemon ;
+    active_pokemon: Pokemon;
+    team: Array<PokemonInInventory>;
 }
 
 
 class UserService {
     private static _cache = new LRU_CACHE<string, FbUser>({
         max: 150,
-        maxAge: 1000*60*10
+        maxAge: 1000*60*60
     });
+
+    private static async _clearInventoryIds (userId: string) {
+        const user = await UserService.getFbUserById(userId);
+
+        if (!user) {
+            return false;
+        }
+
+        const nextPokemons = [...user.pokemons];
+        const nextTeam = [...user.team];
+
+        let inventoryId = 0;
+        for (let i = 0; i < user.pokemons.length; i++) {
+            inventoryId += 1;
+
+            const pokemon = user.pokemons[i];
+
+            const lastId = pokemon.inventory_id;
+            const nextInventoryId = inventoryId;
+            
+            nextPokemons[i] = {
+                ...pokemon,
+                inventory_id: nextInventoryId
+            };
+
+            for (let j = 0; j < user.team.length; j++) {
+                const teamItem = user.team[j];
+                if (teamItem === lastId) {
+                    nextTeam[j] = nextInventoryId;
+                }
+            }
+        }
+
+        UserService._cache.set(userId, {
+            ...user,
+            team: nextTeam,
+            pokemons: nextPokemons
+        });
+
+        await fb.usersCollections.doc(userId).update({
+            team: nextTeam,
+            pokemons: nextPokemons
+        });
+    } 
 
     private static _fromFbPokemonToPokemon(meta: FbPokemon): PokemonInInventory {
         const pokemon: Pokemon = PokemonFactory.generatePokemon({
@@ -64,14 +110,20 @@ class UserService {
         const pokemons = user.pokemons
             .map((pokemonMeta) => UserService._fromFbPokemonToPokemon(pokemonMeta));
 
-        const activePokemon = pokemons[user.active_pokemon];
+        const team = user.team
+            .map((pokId) => pokemons.find((_pok) => _pok.inventory_id === pokId))
+            .filter((_pok) => _pok !== undefined);
+        
+        const activePokemon = team[0];
 
         return {
             id: user.id,
             pokemons: pokemons,
             active_pokemon: activePokemon,
             is_admin: user.is_admin,
-            last_msg_timestamp: user.last_msg_timestamp
+            last_msg_timestamp: user.last_msg_timestamp,
+            team: team,
+            last_inventory_id: user.last_inventory_id
         };
     }
 
@@ -122,10 +174,10 @@ class UserService {
 
         const pokemon = PokemonFactory.generatePokemon({ pokemon_id: STARTER_IDS[starter] });
         const newFbUser: FbUser = {
-            active_pokemon: 0,
             id: userId,
             is_admin: false,
             last_msg_timestamp: Date.now(),
+            last_inventory_id: 0,
             pokemons: [
                 {
                     id: pokemon.id,
@@ -134,7 +186,8 @@ class UserService {
                     available_moves: pokemon.availableMoves,
                     inventory_id: 0
                 }
-            ]
+            ],
+            team: [0]
         };
 
         await fb.usersCollections.doc(userId).set(newFbUser);
@@ -158,14 +211,19 @@ class UserService {
 
         const xpWon = Math.ceil(config.game.xpMinPerMessage + (Math.random() * (config.game.xpMaxPerMessage - config.game.xpMinPerMessage)));
         const updatedUser = {...user};
-        updatedUser.pokemons[user.active_pokemon].level.current_xp += xpWon;
+        const activePokemonIdx = user.pokemons.findIndex((_pok) => _pok.inventory_id === user.team[0]);
+        if (activePokemonIdx === -1) {
+            return [false, null];
+        }
+
+        updatedUser.pokemons[activePokemonIdx].level.current_xp += xpWon;
         updatedUser.last_msg_timestamp = Date.now();
 
         let leveledUp = false;
-        if (updatedUser.pokemons[user.active_pokemon].level.current_xp >= updatedUser.pokemons[user.active_pokemon].level.next_lvl_xp) {
-            updatedUser.pokemons[user.active_pokemon].level.level = updatedUser.pokemons[user.active_pokemon].level.level + 1;
-            updatedUser.pokemons[user.active_pokemon].level.current_xp = updatedUser.pokemons[user.active_pokemon].level.current_xp % updatedUser.pokemons[user.active_pokemon].level.next_lvl_xp;
-            updatedUser.pokemons[user.active_pokemon].level.next_lvl_xp = 100 + (25 * (updatedUser.pokemons[user.active_pokemon].level.level - 1));
+        if (updatedUser.pokemons[activePokemonIdx].level.current_xp >= updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp) {
+            updatedUser.pokemons[activePokemonIdx].level.level = Math.floor(updatedUser.pokemons[activePokemonIdx].level.level + 1);
+            updatedUser.pokemons[activePokemonIdx].level.current_xp = updatedUser.pokemons[activePokemonIdx].level.current_xp % updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp;
+            updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp = 100 + (25 * (updatedUser.pokemons[activePokemonIdx].level.level - 1));
             leveledUp = true;
         }
 
@@ -174,9 +232,9 @@ class UserService {
 
         if (leveledUp) {
             const caughtPokemon = PokemonFactory.generatePokemon({
-                pokemon_id: updatedUser.pokemons[user.active_pokemon].id,
-                level: updatedUser.pokemons[user.active_pokemon].level,
-                stats: updatedUser.pokemons[user.active_pokemon].stats
+                pokemon_id: updatedUser.pokemons[activePokemonIdx].id,
+                level: updatedUser.pokemons[activePokemonIdx].level,
+                stats: updatedUser.pokemons[activePokemonIdx].stats
             });
             return [leveledUp, caughtPokemon];
         }
@@ -191,19 +249,22 @@ class UserService {
             return false;
         }
 
+        let idx = user.last_inventory_id + 1;
         const nextPokemons: FbPokemon[] = [
             ...user.pokemons, 
-            UserService._fromPokemonToFbPokemon(pokemon, user.pokemons.length)
+            UserService._fromPokemonToFbPokemon(pokemon, idx)
         ];
 
         const nextUser: FbUser = {
             ...user,
-            pokemons: nextPokemons
+            pokemons: nextPokemons,
+            last_inventory_id: idx
         };
 
         UserService._cache.set(userId, nextUser);
         await fb.usersCollections.doc(userId).update({
-            pokemons: nextPokemons
+            pokemons: nextPokemons,
+            last_inventory_id: idx
         });
     }
 
@@ -212,26 +273,7 @@ class UserService {
     }
 
     public static async removePokemon (userId: string, pokemonId: number): Promise<boolean> {
-        const user = await UserService.getFbUserById(userId);
-
-        if (!user) {
-            return false;
-        }
-
-        const nextPokemons: FbPokemon[] = user.pokemons.filter((_pok) => _pok.inventory_id !== pokemonId);
-        const nextActiveId = nextPokemons.some((_pok) => _pok.inventory_id === user.active_pokemon) ? user.active_pokemon : nextPokemons[0].inventory_id;
-
-        const nextUser: FbUser = {
-            ...user,
-            pokemons: nextPokemons,
-            active_pokemon: nextActiveId
-        };
-
-        UserService._cache.set(userId, nextUser);
-        await fb.usersCollections.doc(userId).update({
-            pokemons: nextPokemons,
-            active_pokemon: nextActiveId
-        });
+        return await UserService.releasePokemons(userId, [pokemonId]);
     }
 
     public static async releasePokemons (userId: string, inventoryIds: number[]) {
@@ -241,22 +283,70 @@ class UserService {
             return false;
         }
 
-        const nextPokemons: FbPokemon[] = user.pokemons.filter((_pok) => !inventoryIds.includes(_pok.inventory_id));
+        const nextPokemons: FbPokemon[] = user.pokemons
+            .filter((_pok) => !inventoryIds.includes(_pok.inventory_id));
+
         if (nextPokemons.length === 0) {
             nextPokemons.push(user.pokemons[0]);
         }
-        const nextActiveId = inventoryIds.includes(user.active_pokemon) ? nextPokemons[0].inventory_id : user.active_pokemon;
+
+        const nextTeam = user.team
+            .filter((_pokId) => !inventoryIds.includes(_pokId));
+
+        if (nextTeam.length === 0) {
+            nextTeam.push(nextPokemons[0].inventory_id);
+        }
+
         const nextUser: FbUser = {
             ...user,
             pokemons: nextPokemons,
-            active_pokemon: nextActiveId
+            team: nextTeam
         };
 
         UserService._cache.set(userId, nextUser);
         await fb.usersCollections.doc(userId).update({
-            pokemons: nextPokemons,
-            active_pokemon: nextActiveId
+            pokemons: nextPokemons
         });
+
+        await UserService._clearInventoryIds(userId);
+
+        return true;
+    }
+
+    public static async givePokemonsTo(userId: string, targetUserId: string, inventoryIds: number[]) {
+        const user = await UserService.getFbUserById(userId);
+        const targetUser = await UserService.getFbUserById(targetUserId);
+        if (!user || !targetUser) {
+            return false;
+        }
+
+        const pokemons = user.pokemons.filter((_pok) => inventoryIds.includes(_pok.inventory_id));
+        const givenPokemons: FbPokemon[] = [];
+
+        let nextTargetUserLastInventoryId = targetUser.last_inventory_id;
+        for (const pok of pokemons) {
+            nextTargetUserLastInventoryId += 1;
+            givenPokemons.push({
+                ...pok,
+                inventory_id: nextTargetUserLastInventoryId
+            });
+        }
+
+        const nextTargetPokemons = [
+            ...targetUser.pokemons,
+            ...givenPokemons
+        ];
+        UserService._cache.set(targetUserId, {
+            ...targetUser,
+            pokemons: nextTargetPokemons,
+            last_inventory_id: nextTargetUserLastInventoryId
+        });
+        await fb.usersCollections.doc(targetUserId).update({
+            pokemons: nextTargetPokemons,
+            last_inventory_id: nextTargetUserLastInventoryId
+        });
+
+        await UserService.releasePokemons(userId, inventoryIds);
     }
 
     public static async changeActivePokemonIdTo (userId: string, id: number) {
@@ -266,8 +356,7 @@ class UserService {
         }
 
         const nextUser: FbUser = {
-            ...user,
-            active_pokemon: id
+            ...user
         };
 
         UserService._cache.set(userId, nextUser);
@@ -280,8 +369,31 @@ class UserService {
 
     public static async isUserAdmin (userId: string) {
         const user = await UserService.getFbUserById(userId);
-        console.log(user);
         return user.is_admin;
+    }
+
+    public static async changeActiveTeam (userId: string, team: number[]): Promise<boolean> {
+        const user = await UserService.getFbUserById(userId);
+
+        if (!user) {
+            return false;
+        }
+
+        if (team.length === 0) {
+            return false;
+        }
+
+        const nextData = {
+            ...user,
+            team: team
+        };
+
+        UserService._cache.set(userId, nextData);
+        await fb.usersCollections.doc(userId).update({
+            team: team
+        });
+
+        return true;
     }
 }
 
