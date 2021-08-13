@@ -207,6 +207,33 @@ class UserService {
         });
     }
 
+    public static async reSync (userId: string) {
+        UserService._cache.del(userId);
+    }
+
+    public static async removePokemon (userId: string, pokemonId: number): Promise<boolean> {
+        const user = await UserService.getFbUserById(userId);
+
+        if (!user) {
+            return false;
+        }
+
+        const nextPokemons: FbPokemon[] = user.pokemons.filter((_pok) => _pok.inventory_id !== pokemonId);
+        const nextActiveId = nextPokemons.some((_pok) => _pok.inventory_id === user.active_pokemon) ? user.active_pokemon : 1;
+
+        const nextUser: FbUser = {
+            ...user,
+            pokemons: nextPokemons,
+            active_pokemon: nextActiveId
+        };
+
+        UserService._cache.set(userId, nextUser);
+        await fb.usersCollections.doc(userId).update({
+            pokemons: nextPokemons,
+            active_pokemon: nextActiveId
+        });
+    }
+
     public static async changeActivePokemonIdTo (userId: string, id: number) {
         const user = await UserService.getFbUserById(userId);
         if (!user) {
