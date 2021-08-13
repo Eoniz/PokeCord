@@ -11,24 +11,29 @@ const generateXpBar = (currentXp: number, nextLevelXp: number) => {
     return `[${":green_square:".repeat(nbFilled)}${":black_large_square:".repeat(LENGTH - nbFilled)}]`;
 }
 
+const getPercent = (currentXp: number, nextLevelXp: number) => {
+    return Math.floor(currentXp * 100 / nextLevelXp);
+}
+
 const info: ICommand = {
     name: "info",
     description: "Informations about your active pokemon.",
     execute: async (message, args) => {
         const user = await UserService.getById(message.author.id);
+
         if (!user) {
             message.reply("You haven't started yet. Type `p!start` !");
             return;
         }
 
 
-        const lvl = `${user.active_pokemon.level.current_xp}/${user.active_pokemon.level.next_lvl_xp}XP`;
+        const lvl = `${user.active_pokemon.level.current_xp}/${user.active_pokemon.level.next_lvl_xp}XP (${getPercent(user.active_pokemon.level.current_xp, user.active_pokemon.level.next_lvl_xp)}%)`;
         const xpBar = generateXpBar(user.active_pokemon.level.current_xp, user.active_pokemon.level.next_lvl_xp);
         const weight = `**Weight:**${user.active_pokemon.meta.weight}`;
         const height = `**Height:** ${user.active_pokemon.meta.height}`;
         const moves: string[] = ["**Moves:**"];
         user.active_pokemon.moves.forEach((_move) => {
-            moves.push(` - **${capitalize(_move.move.identifier.replace('-', ' '))}**\n-- Type: ${_move.move.type.identifier} | PP: ${_move.move.pp}/${_move.move.pp}`);
+            moves.push(` - **${capitalize(_move.move.identifier.replace('-', ' '))}**\n-- Type: ${_move.move.type.identifier} | PP: ${_move.meta.pp}/${_move.meta.max_pp}`);
         });
 
         for (let i = moves.length; i <= 4; i++) {

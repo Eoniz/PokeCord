@@ -1,3 +1,4 @@
+import LRU_CACHE from 'lru-cache';
 import config from "../../../infrastructure/config";
 import fb from "../../../infrastructure/firebase"
 import { Pokemon, PokemonFactory, PokemonLevel, PokemonMove, PokemonStats } from "../../factories/pokemon";
@@ -28,7 +29,13 @@ export type User = AbstractUser & {
     active_pokemon: Pokemon ;
 }
 
+
 class UserService {
+    private static _cache = new LRU_CACHE<string, FbUser>({
+        max: 150,
+        maxAge: 1000*60*10
+    });
+
     private static _fromFbPokemonToPokemon(meta: FbPokemon): PokemonInInventory {
         const pokemon: Pokemon = PokemonFactory.generatePokemon({
             level: meta.level,
@@ -68,29 +75,38 @@ class UserService {
         };
     }
 
-    public static async getById (userId: string): Promise<User> {
-        const user = await fb.usersCollections.doc(userId).get();
+    public static async getById (userId: string): Promise<User | null> {
+        const user = await UserService.getFbUserById(userId);
 
-        if (!user.exists) {
+        if (!user) {
             return null;
         }
 
-        return UserService._generatePokemonsFromLocalDb(user.data() as FbUser);
+        return UserService._generatePokemonsFromLocalDb(user);
     }
 
-    public static async getFbUserById (userId: string): Promise<FbUser> {
+    public static async getFbUserById (userId: string): Promise<FbUser | null> {
+        const cachedUsed = UserService._cache.get(userId);
+
+        if (cachedUsed !== undefined) {
+            return cachedUsed;
+        }
+
+        console.log("Calling Firebase for getting user informations");
         const user = await fb.usersCollections.doc(userId).get();
 
         if (!user.exists) {
+            UserService._cache.set(userId, null);
             return null;
         }
 
+        UserService._cache.set(userId, user.data() as FbUser);
         return user.data() as FbUser;
     }
 
     public static async userExists (userId: string) {
-        const user = await fb.usersCollections.doc(userId).get();
-        return user.exists;
+        const exists = await UserService.getFbUserById(userId);
+        return exists !== null;
     }
 
     public static async registerUser(userId: string, starter: "bulbasaur" | "charmander" | "squirtle"): Promise<[boolean, FbUser]> {
@@ -122,6 +138,7 @@ class UserService {
         };
 
         await fb.usersCollections.doc(userId).set(newFbUser);
+        UserService._cache.set(userId, newFbUser);
 
         return [true, newFbUser];
     }
@@ -153,6 +170,7 @@ class UserService {
         }
 
         await fb.usersCollections.doc(userId).update(updatedUser);
+        UserService._cache.set(userId, updatedUser);
 
         if (leveledUp) {
             const caughtPokemon = PokemonFactory.generatePokemon({
@@ -178,16 +196,29 @@ class UserService {
             UserService._fromPokemonToFbPokemon(pokemon, user.pokemons.length)
         ];
 
+        const nextUser: FbUser = {
+            ...user,
+            pokemons: nextPokemons
+        };
+
+        UserService._cache.set(userId, nextUser);
         await fb.usersCollections.doc(userId).update({
             pokemons: nextPokemons
         });
     }
 
     public static async changeActivePokemonIdTo (userId: string, id: number) {
-        if (!(await UserService.userExists(userId))) {
+        const user = await UserService.getFbUserById(userId);
+        if (!user) {
             return false;
         }
 
+        const nextUser: FbUser = {
+            ...user,
+            active_pokemon: id
+        };
+
+        UserService._cache.set(userId, nextUser);
         await fb.usersCollections.doc(userId).update({
             active_pokemon: id
         });

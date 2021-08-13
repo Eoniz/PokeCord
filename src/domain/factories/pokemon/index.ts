@@ -21,6 +21,8 @@ export type PokemonLevel = {
 
 export type PokemonMove = {
     id: number;
+    max_pp: number;
+    pp: number;
 }
 
 type GeneratePokemonConfig = {
@@ -40,7 +42,7 @@ export class Pokemon {
     public stats: PokemonStats;
     public level: PokemonLevel;
     public availableMoves: PokemonMove[];
-    public moves: TPokemonMoveCsv[];
+    public moves: Array<TPokemonMoveCsv & { meta: PokemonMove }>;
 
     constructor (meta?: TPokemonCsv, stats?: PokemonStats, level?: PokemonLevel, availableMoves?: PokemonMove[]) {
         this.id = meta.id;
@@ -64,13 +66,13 @@ export class Pokemon {
 
     public setAvailableMoves(availableMoves: PokemonMove[]): Pokemon {
         this.availableMoves = availableMoves;
-        const moves: TPokemonMoveCsv[] = [];
+        const moves: Array<TPokemonMoveCsv & { meta: PokemonMove }> = [];
 
         if (this.meta.moves) {
             for (const availableMove of this.availableMoves) {
                 const move = this.meta.moves.find((_move) => _move.move_id === availableMove.id);
                 if (move) {
-                    moves.push(move);
+                    moves.push({...move, meta: availableMove });
                 }
             }
         }
@@ -119,7 +121,7 @@ export class PokemonFactory {
                 }
 
                 if (_move.level <= _levelConfig.level && _move.move_method.identifier === "level-up") {
-                    moves.push({ id: _move.move_id });
+                    moves.push({ id: _move.move_id, max_pp: _move.move.pp, pp: _move.move.pp });
                 }
             }
         }

@@ -1,3 +1,4 @@
+import LRU_CACHE from 'lru-cache';
 import config from "../../../infrastructure/config";
 import fb from "../../../infrastructure/firebase"
 import { median } from "../../../infrastructure/utils/math";
@@ -26,10 +27,28 @@ export type AttemptToCatchResults = {
 }
 
 class EncountersService {
-    public static async isUserAllowedToCatch (userId: string): Promise<boolean> {
-        const encounter = await fb.encountersCollections.doc(userId).get();
+    private static _cache = new LRU_CACHE<string, FbEncounter>({
+        max: 150,
+        maxAge: 1000*60*10
+    });
 
-        return encounter.exists;
+    public static async getById (userId: string): Promise<FbEncounter | null> {
+        const cachedEncounter = EncountersService._cache.get(userId);
+
+        if (cachedEncounter !== undefined) {
+            return cachedEncounter;
+        }
+
+        const encounter = await fb.encountersCollections.doc(userId).get();
+        const encounterData = encounter.exists ? (encounter.data() as FbEncounter) : null;
+        EncountersService._cache.set(userId, encounterData);
+        return encounterData;
+    }
+
+    public static async isUserAllowedToCatch (userId: string): Promise<boolean> {
+        const encounter = await EncountersService.getById(userId);
+
+        return encounter !== null;
     }
 
     public static async tryToSpawnWildPokemon(userId: string): Promise<Pokemon> {
@@ -38,12 +57,10 @@ class EncountersService {
             return null;
         }
 
-        const activeEncounter = await fb.encountersCollections.doc(userId).get();
-        if (activeEncounter.exists) {
-            const data = activeEncounter.data() as FbEncounter;
-
-            if (Date.now() >= (data.timestamp + (config.game.resetWildFightAfter * 1000))) {
-                await fb.encountersCollections.doc(userId).delete();
+        const activeEncounter = await EncountersService.getById(userId);
+        if (activeEncounter) {
+            if (Date.now() >= (activeEncounter.timestamp + (config.game.resetWildFightAfter * 1000))) {
+                EncountersService.delById(userId);
             } else {
                 return;
             }
@@ -67,13 +84,20 @@ class EncountersService {
                 moves: pokemon.availableMoves
             }
         };
+
+        EncountersService._cache.set(userId, data);
         await fb.encountersCollections.doc(userId).set(data);
 
         return pokemon;
     }
 
+    public static async delById (userId: string) {
+        EncountersService._cache.del(userId);
+        await fb.encountersCollections.doc(userId).delete();
+    }
+
     public static async attemptToCatch (userId: string, pokemonName: string): Promise<AttemptToCatchResults> {
-        const encounter = await fb.encountersCollections.doc(userId).get();
+        const encounter = await EncountersService.getById(userId);
 
         const results: AttemptToCatchResults = {
             attempts_left: -1,
@@ -84,32 +108,30 @@ class EncountersService {
             released: false
         };
 
-        if (!encounter.exists) {
+        if (!encounter) {
             return results;
         }
 
         
-        const encounterData = encounter.data() as FbEncounter;
-        
         const pokemon = PokemonFactory.generatePokemon({
-            pokemon_id: encounterData.pokemon_id,
-            level: encounterData.pokemon_meta.level
+            pokemon_id: encounter.pokemon_id,
+            level: encounter.pokemon_meta.level
         });
 
-        results.max_attempt = encounterData.max_attemps;
-        results.current_attempt = encounterData.attempt;
-        results.attempts_left = encounterData.max_attemps - encounterData.attempt;
+        results.max_attempt = encounter.max_attemps;
+        results.current_attempt = encounter.attempt;
+        results.attempts_left = encounter.max_attemps - encounter.attempt;
 
         if (!pokemon) {
             return results;
         }
 
-        results.current_attempt = encounterData.attempt + 1;
-        results.attempts_left = encounterData.max_attemps - encounterData.attempt;
+        results.current_attempt = encounter.attempt + 1;
+        results.attempts_left = encounter.max_attemps - encounter.attempt;
         results.pokemon = pokemon;
 
         if (pokemonName.toLocaleLowerCase() === pokemon.meta.identifier.toLocaleLowerCase()) {
-            await fb.encountersCollections.doc(userId).delete();
+            EncountersService.delById(userId);
 
             results.caught = true;
 
@@ -117,12 +139,18 @@ class EncountersService {
         }
 
         if (results.attempts_left >= 0) {
-            await fb.encountersCollections.doc(userId).delete();
+            EncountersService.delById(userId);
             results.released = true;
 
             return results;
         }
 
+        const nextData: FbEncounter = {
+            ...encounter,
+            attempt: results.current_attempt
+        };
+
+        EncountersService._cache.set(userId, nextData);
         await fb.encountersCollections.doc(userId).update({
             "attempt": results.current_attempt
         });
