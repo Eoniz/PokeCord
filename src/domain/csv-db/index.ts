@@ -82,6 +82,10 @@ export class AbstractCSVDB<T> {
     public getByIdx (idx: number, maxDepth: number = MAX_DEPTH, depth: number = 0): T {
         const item = this.data[idx];
 
+        if (!item) {
+            return null;
+        }
+
         if (depth >= maxDepth) {
             this._computes(item);
             return item;
@@ -132,6 +136,10 @@ export class AbstractCSVDB<T> {
             return false;
         });
 
+        if (items.length === 0) {
+            return [];
+        }
+
         if (depth >= maxDepth) {
             for (const item of items) {
                 this._computes(item);
@@ -180,6 +188,10 @@ export class AbstractCSVDB<T> {
 
             return false;
         });
+
+        if (!item) {
+            return null;
+        }
 
         if (depth >= maxDepth) {
             this._computes(item);

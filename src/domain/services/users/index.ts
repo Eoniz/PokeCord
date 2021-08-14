@@ -221,8 +221,6 @@ class UserService {
         updatedUser.pokemons[activePokemonIdx].level.current_xp += xpWon;
         updatedUser.last_msg_timestamp = Date.now();
 
-        const pokemonMeta = LocalDB.pokemons.getFirstById(updatedUser.pokemons[activePokemonIdx].id);
-
         let leveledUp = false;
         let nxtEvolution: TPokemonCsv = null;
         if (updatedUser.pokemons[activePokemonIdx].level.current_xp >= updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp) {

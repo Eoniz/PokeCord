@@ -55,10 +55,10 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
     public findNextEvolution (pokId: number): TPokemonCsv | null {
         const species = LocalDB.species.getFirstByProperty("evolves_from_species_id", pokId);
 
-        if (species) {
-            return this.getFirstById(species.id);
+        if (!species) {
+            return null;
         }
 
-        return null;
+        return LocalDB.pokemons.getFirstById(species.id);
     }
 }
