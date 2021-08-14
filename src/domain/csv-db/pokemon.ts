@@ -48,8 +48,8 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
 
         this.bindOneToOne("species", "species_id", "id", "species");
         this.bindOneToOne("evolution_meta", "id", "evolved_species_id", "pokemonEvolution");
-        // this.bindOneToMany("pokemonBaseStats", "id", "pokemon_id", "pokemonStats");
-        // this.bindOneToMany("moves", "id", "pokemon_id", "pokemonMoves");
+        this.bindOneToMany("pokemonBaseStats", "id", "pokemon_id", "pokemonStats");
+        this.bindOneToMany("moves", "id", "pokemon_id", "pokemonMoves");
     }
 
     public findNextEvolution (pokId: number): TPokemonCsv | null {
