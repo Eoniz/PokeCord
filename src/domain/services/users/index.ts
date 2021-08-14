@@ -206,8 +206,8 @@ class UserService {
         }
 
         const timeBetweenXpInMs = config.game.timeBetweenXp * 1000;
-        // if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
-        if (Date.now() < 0) {
+        if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
+        // if (Date.now() < 0) {
             return [false, null, null];
         }
 
