@@ -1,5 +1,6 @@
 import { MAX_POKEMON_ID, MIN_POKEMON_ID } from "../factories/pokemon";
 import { AbstractCSVDB } from "./index";
+import { LocalDB } from "./localdb";
 import { TPokemonEvolutionCsv } from "./pokemon_evolution";
 import { TPokemonMoveCsv } from "./pokemon_moves";
 import { TPokemonStatsCsv } from "./pokemon_stats";
@@ -20,7 +21,8 @@ export type TPokemonCsv = {
 
     // binds
     species: TSpeciesCsv;
-    evolution: TPokemonEvolutionCsv;
+    evolution: TPokemonCsv;
+    evolution_meta?: TPokemonEvolutionCsv;
     pokemonBaseStats: TPokemonStatsCsv[];
     moves: TPokemonMoveCsv[];
 }
@@ -38,11 +40,25 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
                 return `http://www.serebii.net/pokemongo/pokemon/0${pok.id}.png`;
             }
             return `http://www.serebii.net/pokemongo/pokemon/${pok.id}.png`
-        })
+        });
+
+        this.compute("evolution", (pok: TPokemonCsv) => {
+            return this.findNextEvolution(pok.id);
+        });
 
         this.bindOneToOne("species", "species_id", "id", "species");
-        this.bindOneToOne("evolution", "id", "id", "pokemonEvolution");
-        this.bindOneToMany("pokemonBaseStats", "id", "pokemon_id", "pokemonStats");
-        this.bindOneToMany("moves", "id", "pokemon_id", "pokemonMoves");
+        this.bindOneToOne("evolution_meta", "id", "evolved_species_id", "pokemonEvolution");
+        // this.bindOneToMany("pokemonBaseStats", "id", "pokemon_id", "pokemonStats");
+        // this.bindOneToMany("moves", "id", "pokemon_id", "pokemonMoves");
+    }
+
+    public findNextEvolution (pokId: number): TPokemonCsv | null {
+        const species = LocalDB.species.getFirstByProperty("evolves_from_species_id", pokId);
+
+        if (species) {
+            return this.getFirstById(species.id);
+        }
+
+        return null;
     }
 }

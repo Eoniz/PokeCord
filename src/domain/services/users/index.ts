@@ -206,8 +206,8 @@ class UserService {
         }
 
         const timeBetweenXpInMs = config.game.timeBetweenXp * 1000;
-        if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
-        // if (Date.now() < 0) {
+        // if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
+        if (Date.now() < 0) {
             return [false, null, null];
         }
 
@@ -221,6 +221,8 @@ class UserService {
         updatedUser.pokemons[activePokemonIdx].level.current_xp += xpWon;
         updatedUser.last_msg_timestamp = Date.now();
 
+        const pokemonMeta = LocalDB.pokemons.getFirstById(updatedUser.pokemons[activePokemonIdx].id);
+
         let leveledUp = false;
         let nxtEvolution: TPokemonCsv = null;
         if (updatedUser.pokemons[activePokemonIdx].level.current_xp >= updatedUser.pokemons[activePokemonIdx].level.next_lvl_xp) {
@@ -232,12 +234,11 @@ class UserService {
             const pokemonMeta = LocalDB.pokemons.getFirstById(updatedUser.pokemons[activePokemonIdx].id);
             if (
                 pokemonMeta.evolution
-                && nextLvl >= pokemonMeta.evolution.minimum_level 
-                && pokemonMeta.evolution.evolution_trigger 
-                && pokemonMeta.evolution.evolution_trigger.identifier === "level-up"
-                && pokemonMeta.evolution.evolved_species
+                && nextLvl >= pokemonMeta.evolution.evolution_meta.minimum_level 
+                && pokemonMeta.evolution.evolution_meta.evolution_trigger
+                && pokemonMeta.evolution.evolution_meta.evolution_trigger.identifier === "level-up"
             ) {
-                nxtEvolution = LocalDB.pokemons.getFirstById(pokemonMeta.evolution.evolved_species.id);
+                nxtEvolution = LocalDB.pokemons.getFirstById(pokemonMeta.evolution.id);
             }
             
             leveledUp = true;
@@ -430,13 +431,13 @@ class UserService {
         const meta = LocalDB.pokemons.getFirstById(activePokemon.id);
         const nextPokemons = [...user.pokemons];
 
-        if (!meta.evolution || !meta.evolution.evolved_species) {
+        if (!meta.evolution) {
             return false;
         }
 
         nextPokemons[activePokemonIdx] = {
             ...activePokemon,
-            id: meta.evolution.evolved_species.id
+            id: meta.evolution.id
         };
 
         UserService._cache.set(userId, {

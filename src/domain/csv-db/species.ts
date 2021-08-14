@@ -29,6 +29,7 @@ export type TSpeciesCsv = {
     evolves_from_species: TSpeciesCsv;
     habitat?: THabitatCsv;
     shape?: TShapeCsv;
+    // evolutions: TSpeciesCsv[];
 }
 
 export class SpeciesDB extends AbstractCSVDB<TSpeciesCsv> {
@@ -37,7 +38,10 @@ export class SpeciesDB extends AbstractCSVDB<TSpeciesCsv> {
 
         this.bindOneToOne("color", "color_id", "id", "pokemonColors");
         this.bindOneToOne("evolves_from_species", "evolves_from_species_id", "id", "species");
+        this.bindOneToOne("evolves_from_species", "evolves_from_species_id", "id", "species");
         this.bindOneToOne("habitat", "habitat_id", "id", "habitats");
         this.bindOneToOne("shape", "shape_id", "id", "pokemonShapes");
+
+        // this.bindOneToMany("evolutions", "evolution_chain_id", "evolution_chain_id", "species");
     }
 }

@@ -46,7 +46,7 @@ export const generateEvolutionImg = async (urls: string[]) => {
     const pokemonImgs = await Promise.all(pokemonUrlsPromises);
     
     for (let i = 0; i < urls.length; i++) {
-        const x = i * 200;
+        const x = i * 300;
         const y = 0
 
         const img = pokemonImgs[i];
