@@ -10,12 +10,12 @@ const catchCommand: ICommand = {
     description: "Catch the pokemon by guessing its name !",
     execute: async (message, args) => {
         if (!await EncountersService.isUserAllowedToCatch(message.author.id)) {
-            message.reply("There is not pokemon to catch yet for you !");
+            message.reply("There is no pokemon to catch yet for you !");
             return;
         }
 
         if (args.length !== 1) {
-            message.reply("Usage: p!pick <pokémon>");
+            message.reply("Usage: p!catch <pokémon>");
             return;
         }
 
