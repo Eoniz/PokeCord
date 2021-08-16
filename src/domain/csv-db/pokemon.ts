@@ -5,6 +5,7 @@ import { TPokemonEvolutionCsv } from "./pokemon_evolution";
 import { TPokemonMoveCsv } from "./pokemon_moves";
 import { TPokemonStatsCsv } from "./pokemon_stats";
 import { TSpeciesCsv } from "./species";
+import { getPokedexImgPathById, getPokemonImgPathById } from "../../infrastructure/utils/image";
 
 export type TPokemonCsv = {
     id: number;
@@ -35,23 +36,11 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
         this.data = this.data.slice(MIN_POKEMON_ID - 1, MAX_POKEMON_ID);
         
         this.compute("img", (pok: TPokemonCsv) => {
-            if (pok.id < 10) {
-                return `http://www.serebii.net/pokemongo/pokemon/00${pok.id}.png`;
-            } else if (pok.id >= 10 && pok.id < 100) {
-                return `http://www.serebii.net/pokemongo/pokemon/0${pok.id}.png`;
-            }
-            return `http://www.serebii.net/pokemongo/pokemon/${pok.id}.png`
+            return getPokemonImgPathById(pok.id);
         });
 
         this.compute("mini_img", (pok: TPokemonCsv) => {
-            let id = pok.id.toString();
-            if (pok.id < 10) {
-                id = `00${pok.id}`;
-            } else if (pok.id >= 10 && pok.id < 100) {
-                id = `0${pok.id}`;
-            }
-
-            return `https://www.serebii.net/pokedex-xy/icon/${id}.png`
+            return getPokedexImgPathById(pok.id);
         });
 
         this.compute("evolution", (pok: TPokemonCsv) => {

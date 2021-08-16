@@ -66,7 +66,8 @@ class EncountersService {
             }
         }
 
-        if ((Math.random() * 100) > config.game.chanceToSpawnWildPokemon) {
+        const r = Math.random() * 100;
+        if (r > config.game.chanceToSpawnWildPokemon) {
             return null;
         }
 

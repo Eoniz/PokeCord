@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
+import { generatePokemonImg } from '../../../infrastructure/utils/image';
 import EncountersService from '../../services/encounters';
 import MessagesService from '../../services/message';
 import UserService from '../../services/users';
@@ -29,16 +30,23 @@ const catchCommand: ICommand = {
         } = await EncountersService.attemptToCatch(message.author.id, args[0]);
         
         if (caught) {
+            const canvas = await generatePokemonImg(pokemon.meta.id);
+            const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+
+            const fbPok = await UserService.addPokemon(message.author.id, pokemon);
+
             const embed = new Discord.MessageEmbed()
-                .setTitle("Congratulations!")
+                .setTitle(`You caught a ${pokemon.meta.identifier.toUpperCase()}!`)
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
-                .setDescription(`You caught a ${capitalize(pokemon.meta.identifier)}!\n\n**Added to your Pokédex**`)
-                .setImage(pokemon.meta.img);
+                .setDescription(`He was added yo your **PC** with id: **${fbPok.inventory_id}**`)
+                .attachFiles([attachment])
+                .setImage("attachment://team.png");
             
             await MessagesService.send({ embed: embed });
+           
 
-            await UserService.addPokemon(message.author.id, pokemon);
+            await UserService.xpActiveTeam(message.author.id);
 
             return;
         }

@@ -2,6 +2,7 @@ import Discord from 'discord.js';
 import { ICommand } from "../../../infrastructure/types/commands/commands.types";
 import { capitalize } from '../../../infrastructure/utils/string';
 import { getPercent } from '../../../infrastructure/utils/math';
+import { generateInfoImg } from '../../../infrastructure/utils/image';
 import MessagesService from '../../services/message';
 import UserService from '../../services/users';
 
@@ -37,13 +38,18 @@ const info: ICommand = {
             moves.push("-\n");
         }
 
+        const canvas = await generateInfoImg(user.active_pokemon.id);
+        const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+
+
         const embed = new Discord.MessageEmbed()
             .setTitle(`${capitalize(user.active_pokemon.meta.identifier)}`)
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
             .setDescription(`${xpBar}\n**Level ${user.active_pokemon.level.level}**\n${lvl}\n\n${weight}\n${height}\n\n${moves.join('\n')}\n`)
-            .setImage(user.active_pokemon.meta.img);
-        
+            .attachFiles([attachment])
+            .setImage("attachment://team.png");
+
         MessagesService.send({ embed: embed });
     }
 }

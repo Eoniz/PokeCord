@@ -40,18 +40,18 @@ const PC: ICommand = {
             desc.push(`${pokemon.inventory_id}: **${capitalize(pokemon.meta.identifier)}** | Level ${pokemon.level.level}`);
         }
         
-        //const pcInfos = sorted.map((_pok) => ({url: _pok.meta.mini_img, id: _pok.inventory_id }));
+        const pcInfos = sorted.map((_pok) => ({url: _pok.meta.mini_img, id: _pok.inventory_id }));
 
-        //const canvas = await generatePCImg(pcInfos);
-        //const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+        const canvas = await generatePCImg(pcInfos);
+        const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
 
         const embed = new Discord.MessageEmbed()
             .setTitle("Your Pokémons:")
             .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
             .setColor("#ff0000")
             .setDescription(desc.join('\n'))
-            //.attachFiles([attachment])
-            //.setImage("attachment://team.png")
+            .attachFiles([attachment])
+            .setImage("attachment://team.png")
             .setFooter(`Your active pokemon is: ${capitalize(user.active_pokemon.meta.identifier)} (level ${user.active_pokemon.level.level})\nShowing ${((page - 1) * MAX_PER_PAGE) + 1}-${(page - 1) * MAX_PER_PAGE + desc.length} of ${user.pokemons.length} pokemons (page ${page}/${maxPage})\n\nType p!pokemon <page number> for showing the next ones`)
         
         message.channel.send({ embed: embed });

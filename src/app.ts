@@ -10,7 +10,7 @@ import UserService from "./domain/services/users";
 import MessagesService from "./domain/services/message";
 import EncountersService from "./domain/services/encounters";
 import { capitalize } from "./infrastructure/utils/string";
-import { generateEvolutionImg } from "./infrastructure/utils/image";
+import { generateEvolutionImg, generatePokemonImg } from "./infrastructure/utils/image";
 
 
 export const client = new Discord.Client();
@@ -31,12 +31,16 @@ client.on('message', async (message) => {
     if (!message.content.startsWith(config.discord.prefix)) {
         const [leveledUp, leveledUpPokemon, evolution] = await UserService.xpActivePokemon(message.author.id);
         if (leveledUp) {
+            const canvas = await generatePokemonImg(leveledUpPokemon.id);
+            const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+
             const embed = new Discord.MessageEmbed()
                 .setTitle(`Congratulations ${message.author.username}, your pokemon just leveled up!`)
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
                 .setDescription(`Your pokémon is now level ${leveledUpPokemon.level.level}`)
-                .setImage(leveledUpPokemon.meta.img);
+                .attachFiles([attachment])
+                .setImage("attachment://team.png");
             
                 await MessagesService.send({ embed: embed });
             
@@ -56,25 +60,32 @@ client.on('message', async (message) => {
 
                 await UserService.evolveActivePokemon(message.author.id);
 
+                const evolutionCanvas = await generatePokemonImg(leveledUpPokemon.id);
+                const evolutionAttachment = new Discord.MessageAttachment(evolutionCanvas.toBuffer(), 'team.png');
                 const embedEvolved = new Discord.MessageEmbed()
                     .setTitle(`${capitalize(leveledUpPokemon.meta.identifier)} is now ${evolution.identifier.toUpperCase()} !`)
                     .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                     .setColor("#ff0000")
                     .setDescription(`Congratulations!`)
-                    .setImage(evolution.img);
+                    .attachFiles([evolutionAttachment])
+                    .setImage("attachment://team.png");
 
                 await MessagesService.send({ embed: embedEvolved });
             }
         }
-        
+
         const pokemon = await EncountersService.tryToSpawnWildPokemon(message.author.id);
         if (pokemon) {
+            const canvas = await generatePokemonImg(pokemon.id);
+            const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'team.png');
+
             const embed = new Discord.MessageEmbed()
                 .setTitle(`A wild pokémon (level ${pokemon.level.level}) has appeared! (tip: ${pokemon.meta.identifier})`)
                 .setAuthor("Professor Oak", "https://cdn.costumewall.com/wp-content/uploads/2017/02/professor-oak.jpg")
                 .setColor("#ff0000")
                 .setDescription(`Guess the pokémon and type p!catch <pokémon> to catch it!`)
-                .setImage(pokemon.meta.img)
+                .attachFiles([attachment])
+                .setImage("attachment://team.png")
                 .setFooter("Time left: 10:00");
             
             await MessagesService.replyTo(message.author, "A wild pokémon has appeared!");
