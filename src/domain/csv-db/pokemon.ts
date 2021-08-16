@@ -17,6 +17,7 @@ export type TPokemonCsv = {
     
     // computed
     img: string;
+    mini_img: string;
 
     // binds
     species: TSpeciesCsv;
@@ -38,6 +39,17 @@ export class PokemonDB extends AbstractCSVDB<TPokemonCsv> {
                 return `http://www.serebii.net/pokemongo/pokemon/0${pok.id}.png`;
             }
             return `http://www.serebii.net/pokemongo/pokemon/${pok.id}.png`
+        });
+
+        this.compute("mini_img", (pok: TPokemonCsv) => {
+            let id = pok.id.toString();
+            if (pok.id < 10) {
+                id = `00${pok.id}`;
+            } else if (pok.id >= 10 && pok.id < 100) {
+                id = `0${pok.id}`;
+            }
+
+            return `https://www.serebii.net/pokedex-xy/icon/${id}.png`
         })
 
         this.bindOneToOne("species", "species_id", "id", "species");
