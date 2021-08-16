@@ -81,9 +81,13 @@ export class AbstractCSVDB<T> {
 
     public getByIdx (idx: number, maxDepth: number = MAX_DEPTH, depth: number = 0): T {
         const item = this.data[idx];
-        this._computes(item);
+
+        if (!item) {
+            return null;
+        }
 
         if (depth >= maxDepth) {
+            this._computes(item);
             return item;
         }
 
@@ -96,7 +100,7 @@ export class AbstractCSVDB<T> {
 
             if (bind.type === "oneToMany") {
 
-                const founds = table.data.filter((row) => row[bind.otherTableCol] === item[bind.col]).map((row) => table.data.findIndex((_row) => _row === row));
+                const founds = table.data.filter((row) => item !== row && row[bind.otherTableCol] === item[bind.col]).map((row) => table.data.findIndex((_row) => _row === row));
                 item[bind.propertyName] = founds.map((row) => table.getByIdx(row, maxDepth, depth + 1));
 
 
@@ -111,6 +115,7 @@ export class AbstractCSVDB<T> {
             }
         }
 
+        this._computes(item);
         return item;
     }
 
@@ -131,11 +136,15 @@ export class AbstractCSVDB<T> {
             return false;
         });
 
-        for (const item of items) {
-            this._computes(item);
+        if (items.length === 0) {
+            return [];
         }
 
         if (depth >= maxDepth) {
+            for (const item of items) {
+                this._computes(item);
+            }
+
             return items;
         }
 
@@ -149,7 +158,7 @@ export class AbstractCSVDB<T> {
     
                 if (bind.type === "oneToMany") {
 
-                    const founds = table.data.filter((row) => row[bind.otherTableCol] === item[bind.col]).map((row) => table.data.findIndex(row));
+                    const founds = table.data.filter((row) => item !== row && row[bind.otherTableCol] === item[bind.col]).map((row) => table.data.findIndex(row));
                     item[bind.propertyName] = founds.map((row) => table.getByIdx(row, maxDepth, depth + 1));
     
                 } else if (bind.type === "oneToOne") {
@@ -164,6 +173,10 @@ export class AbstractCSVDB<T> {
             }
         }
 
+        for (const item of items) {
+            this._computes(item);
+        }
+
         return items;
     }
 
@@ -176,9 +189,13 @@ export class AbstractCSVDB<T> {
             return false;
         });
 
-        this._computes(item);
+        if (!item) {
+            return null;
+        }
 
         if (depth >= maxDepth) {
+            this._computes(item);
+
             return item;
         }
 
@@ -193,6 +210,10 @@ export class AbstractCSVDB<T> {
 
                 const founds = otherTable.data
                     .reduce<Array<number>>((prev, curr, i) => {
+                        if (curr === item) {
+                            return prev;
+                        }
+
                         if (curr[bind.otherTableCol] === item[bind.col]) {
                             return [...prev, i];
                         }
@@ -213,6 +234,7 @@ export class AbstractCSVDB<T> {
             }
         }
 
+        this._computes(item);
         return item;
     }
 }
