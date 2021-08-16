@@ -8,6 +8,7 @@ const PC: ICommand = {
     name: "test",
     description: "Your pc where all your pokemons are stored in.",
     execute: async (message, args) => {
+        /*
         const user = await UserService.getById(message.author.id);
         if (!user) {
             message.reply("You haven't started yet. Type `p!start` !");
@@ -27,7 +28,7 @@ const PC: ICommand = {
             .setImage("attachment://team.png");
 
         message.channel.send({ embed: embed });
-
+        */
         /*
         const MAX_PER_PAGE = 25;
         let page = 1;
