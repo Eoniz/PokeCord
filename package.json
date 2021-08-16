@@ -5,7 +5,7 @@
   "main": "build/app.js",
   "scripts": {
     "start": "node build/app.js",
-    "build": "rm -fr build && tsc && cp -r ./src/csvs build/csvs",
+    "build": "rm -fr build && tsc && cp -r ./img build/img && cp -r ./src/csvs build/csvs",
     "startDev": "npm run build && node build/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,7 +18,10 @@
   "devDependencies": {
     "@types/lru-cache": "^5.1.1",
     "@types/node": "^14.14.41",
+    "fetch": "^1.1.0",
+    "node-fetch": "^2.6.1",
     "nodemon": "^2.0.7",
+    "request": "^2.88.2",
     "tslint": "^6.1.3",
     "typescript": "^4.2.4"
   },
