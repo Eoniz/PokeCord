@@ -454,16 +454,14 @@ class UserService {
         return true;
     }
 
-    public static async evolvePokemon (userId: string, inventoryId: number) {
+    public static async evolvePokemon (userId: string, pokemonIdx: number) {
         const user = await UserService.getFbUserById(userId);
 
         if (!user) {
             return false;
         }
 
-        const pokemonIdx = user.pokemons.findIndex((_pok) => _pok.inventory_id === inventoryId);
-
-        if (pokemonIdx === -1) {
+        if (user.pokemons[pokemonIdx] === undefined) {
             return false;
         }
 
@@ -498,19 +496,14 @@ class UserService {
             return false;
         }
 
-        const timeBetweenXpInMs = config.game.timeBetweenXp * 1000;
-        if (Date.now() < (user.last_msg_timestamp + timeBetweenXpInMs)) {
-        // if (Date.now() < 0) {
-            return false;
-        }
-
-        
         const updatedUser = {...user};
         const activePokemonsIdx = user.team.map((_id) => {
             return user.pokemons.findIndex((_pok) => _pok.inventory_id === _id)
         }).filter((_id) => _id !== -1);
 
         updatedUser.last_msg_timestamp = Date.now();
+        
+        const pokemonsToEvolve: Record<string, { meta: TPokemonCsv, nextMeta: TPokemonCsv }> = {};
         for (const pokemonIdx of activePokemonsIdx) {
             const xpWon = Math.ceil(config.game.xpMinPerMessage + (Math.random() * (config.game.xpMaxPerMessage - config.game.xpMinPerMessage)));
             updatedUser.pokemons[pokemonIdx].level.current_xp += xpWon;
@@ -530,14 +523,21 @@ class UserService {
                     && pokemonMeta.evolution.evolution_meta.evolution_trigger.identifier === "level-up"
                 ) {
                     nxtEvolution = LocalDB.pokemons.getFirstById(pokemonMeta.evolution.id);
-                    await UserService.evolvePokemon(userId, updatedUser.pokemons[pokemonIdx].inventory_id);
-                    await MessagesService.sendPokemonEvolvedToUserByUserId(userId, pokemonMeta, nxtEvolution);
+                    pokemonsToEvolve[pokemonIdx] = {
+                        meta: pokemonMeta,
+                        nextMeta: nxtEvolution
+                    };
                 }
             }
         }
 
         await fb.usersCollections.doc(userId).update(updatedUser);
         UserService._cache.set(userId, updatedUser);
+
+        for (const [id, meta] of Object.entries(pokemonsToEvolve)) {
+            await UserService.evolvePokemon(userId, Number.parseInt(id, 10));
+            await MessagesService.sendPokemonEvolvedToUserByUserId(userId, meta.meta, meta.nextMeta);
+        }
 
         return true;
     }
