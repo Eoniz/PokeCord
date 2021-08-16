@@ -11,3 +11,8 @@ export const median = (...numbers: number[]): number => {
 export const getPercent = (currentXp: number, nextLevelXp: number) => {
     return Math.floor(currentXp * 100 / nextLevelXp);
 }
+
+export const formatToFinance = (x: number): string => {
+    const str = x.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    return str.slice(0, str.length - 3);
+}

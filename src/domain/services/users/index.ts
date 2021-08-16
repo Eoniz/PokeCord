@@ -5,6 +5,7 @@ import config from "../../../infrastructure/config";
 import fb from "../../../infrastructure/firebase"
 import { Pokemon, PokemonFactory, PokemonLevel, PokemonMove, PokemonStats } from "../../factories/pokemon";
 import MessagesService from '../message';
+import InventoryService, { FbInventory } from '../inventory';
 
 export type AbstractUser = {
     id: string;
